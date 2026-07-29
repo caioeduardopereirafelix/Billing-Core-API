@@ -57,16 +57,16 @@ public class PlanService {
 
         plan.setActive(false);
 
-        return repository.save(plan);
+        return plan;
     }
 
-    public Plan atualizarPreco(Long id, BigDecimal novoPreco) {
+    public Plan putPrice(Long id, BigDecimal novoPreco) {
 
         Plan plan = repository.findById(id)
                 .orElseThrow(() -> new PlanNotFound(id.toString()));
 
         if (novoPreco == null || novoPreco.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("O preço deve ser maior que zero.");
+            throw new IllegalArgumentException("The price must be greater than 0.");
         }
 
         plan.setPrice(novoPreco);
