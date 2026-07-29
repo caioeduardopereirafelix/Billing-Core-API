@@ -19,8 +19,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SubscriptionService {
 
-    SubscriptionRepository repository;
-    PlanRepository planRepository;
+    private final SubscriptionRepository repository;
+    private final PlanRepository planRepository;
 
 
     public Subscription createSubscription(SubscriptionRequest request){

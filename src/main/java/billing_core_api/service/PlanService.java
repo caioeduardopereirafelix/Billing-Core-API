@@ -2,6 +2,7 @@ package billing_core_api.service;
 
 import billing_core_api.domain.Plan;
 import billing_core_api.dto.PlanRequest;
+import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +15,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PlanService {
 
-    PlanRepository repository;
+    private final PlanRepository repository;
 
     public Plan createPlan(PlanRequest request){
 
         if (repository.existsByName(request.namePlan())){
-            throw new IllegalArgumentException("Already exist plan with that name");
+            throw new PlanAlreadyExists("Already exist plan with that name");
         }
 
         Plan plan = new Plan();
