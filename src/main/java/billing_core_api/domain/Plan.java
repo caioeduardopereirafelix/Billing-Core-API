@@ -15,20 +15,21 @@ public class Plan {
     @Id
     private Long id;
 
-    @Column
-    private String namePlan;
+    @Column(nullable = false, unique = true, length = 100)
+    private String name;
 
-    @Column
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
-    @Column
-    private String descriptionPlan;
+    @Column(length = 500)
+    private String description;
 
-    @Column
-    BillingCycle billingCycle;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BillingCycle billingCycle;
 
-    @Column
-    private boolean activate;
+    @Column(nullable = false)
+    private boolean active;
 
 
 }
