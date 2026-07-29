@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findByActiveTrue();
+
+    boolean existsByName(String name);
 }
