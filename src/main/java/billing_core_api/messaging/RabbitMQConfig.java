@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 @Configuration
 public class RabbitMQConfig {
 
-    private static final String USER_EXCHANGE = "subscription.exchange";
-    private static final String QUEUE_SUCESS_SUBSCRIPTION = "welcome.subscription";
-    private static final String BINDING_CREATED_ROUTING_KEY = "success.subscription";
+    public static final String USER_EXCHANGE = "subscription.exchange";
+    public static final String QUEUE_SUCESS_SUBSCRIPTION = "welcome.subscription";
+    public static final String BINDING_CREATED_ROUTING_KEY = "success.subscription";
 
     @Bean
     public TopicExchange exchange(){

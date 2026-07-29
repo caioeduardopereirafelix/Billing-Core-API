@@ -5,5 +5,7 @@ import billing_core_api.domain.BillingCycle;
 import java.math.BigDecimal;
 
 public record SubscriptionResponse(String customerEmail,
-                                   String customerName) {
+                                   String customerName,
+                                   String planName,
+                                   String status) {
 }

@@ -25,7 +25,7 @@ public class SubscriptionController {
         var subscription = service.createSubscription(subscriptionRequest);
 
         var response = new SubscriptionResponse(subscription.getCustomerName(),
-                subscription.getCustomerName());
+                subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
