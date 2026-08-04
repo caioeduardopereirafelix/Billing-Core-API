@@ -1,7 +1,10 @@
 package billing_core_api.messaging;
 
 import billing_core_api.messaging.event.SubscriptionCreatedEvent;
+import billing_core_api.service.SubscriptionService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.MessageConverter;
@@ -14,10 +17,12 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SubscriptionEventPublisher {
 
+    private static final Logger log = LoggerFactory.getLogger(SubscriptionEventPublisher.class);
     private final MessageConverter messageConverter;
     private final RabbitTemplate template;
 
     public void publishSubscriptionCreated(SubscriptionCreatedEvent event){
+        log.info("Publicando evento: {}", event);
         template.convertAndSend(RabbitMQConfig.USER_EXCHANGE,
                                 RabbitMQConfig.BINDING_CREATED_ROUTING_KEY,
                                 event,
