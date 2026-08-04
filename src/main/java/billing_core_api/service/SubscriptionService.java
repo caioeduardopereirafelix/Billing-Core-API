@@ -13,6 +13,8 @@ import billing_core_api.repository.SubscriptionRepository;
 import jakarta.transaction.Transactional;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,6 +32,7 @@ public class SubscriptionService {
     private final SubscriptionRepository repository;
     private final PlanRepository planRepository;
     private final SubscriptionEventPublisher eventPublisher;
+    private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
 
     public Subscription createSubscription(SubscriptionRequest request){
@@ -49,15 +52,18 @@ public class SubscriptionService {
 
         //criacao mensagem para Notification-Worker
 
-        String correlationID = UUID.randomUUID().toString();
+        String correlationId = UUID.randomUUID().toString();
         SubscriptionCreatedEvent event = new SubscriptionCreatedEvent(
+                UUID.randomUUID(),
                 saved.getId(),
                 saved.getCustomerEmail(),
                 saved.getCustomerName(),
                 saved.getPlan().getName(),
-                correlationID
+                correlationId
         );
 
+        log.info("PUBLICANDO EVENT: {}", event.eventId());
+        log.info("CorrelationId enviado: {}", event.correlationID());
         eventPublisher.publishSubscriptionCreated(event);
 
         return saved;
