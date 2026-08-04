@@ -1,6 +1,9 @@
 package billing_core_api.messaging.event;
 
-public record SubscriptionCreatedEvent(Long subscriptionId,
+import java.util.UUID;
+
+public record SubscriptionCreatedEvent(UUID eventId,
+                                       Long subscriptionId,
                                        String customerEmail,
                                        String customerName,
                                        String planName,
