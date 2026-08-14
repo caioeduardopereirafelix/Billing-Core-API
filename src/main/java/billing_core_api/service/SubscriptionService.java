@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -69,6 +70,7 @@ public class SubscriptionService {
         return saved;
     }
 
+    @Cacheable(value = "subscriptions", key = "#id")
     public Subscription buscarPorId(Long id){
        return repository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException("Subscription Not Found"));
