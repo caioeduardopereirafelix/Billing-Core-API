@@ -1,5 +1,10 @@
 spring:
 
+  data:
+    redis:
+      host: localhosts
+      port: 6379
+
   application:
     name: billing-core-api
 

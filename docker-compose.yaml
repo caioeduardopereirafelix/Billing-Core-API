@@ -29,6 +29,15 @@ services:
       - billing-network
 
 
+  redis:
+    image: redis
+    container_name: billing-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: billing-pgadmin
@@ -84,6 +93,7 @@ volumes:
   postgres_data:
   pgadmin_data:
   rabbitmq_data:
+  redis_data:
 
 
 networks:
