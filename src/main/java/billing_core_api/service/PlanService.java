@@ -6,6 +6,8 @@ import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -34,6 +36,7 @@ public class PlanService {
         return repository.save(plan);
     }
 
+    @Cacheable(value = "subscriptions", key = "#id")
     public Plan findById(Long id){
 
        return repository.findById(id)
@@ -46,6 +49,7 @@ public class PlanService {
         return all;
     }
 
+    @CacheEvict(value = "subscriptions", key = "#id")
     public Plan disabledPlan(Long id){
 
         var plan = repository.findById(id)
