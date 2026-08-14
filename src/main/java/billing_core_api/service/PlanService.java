@@ -36,7 +36,7 @@ public class PlanService {
         return repository.save(plan);
     }
 
-    @Cacheable(value = "subscriptions", key = "#id")
+    @Cacheable(value = "plan", key = "#id")
     public Plan findById(Long id){
 
        return repository.findById(id)
@@ -49,7 +49,7 @@ public class PlanService {
         return all;
     }
 
-    @CacheEvict(value = "subscriptions", key = "#id")
+    @CacheEvict(value = "plan", key = "#id")
     public Plan disabledPlan(Long id){
 
         var plan = repository.findById(id)
