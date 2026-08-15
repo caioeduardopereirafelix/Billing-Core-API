@@ -1,8 +1,8 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.BillingCycle;
-import billing_core_api.domain.Plan;
-import billing_core_api.dto.PlanRequest;
+import billing_core_api.domain.subscription.BillingCycle;
+import billing_core_api.domain.plan.Plan;
+import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.OngoingStubbing;
 
 import java.math.BigDecimal;
 import java.util.List;

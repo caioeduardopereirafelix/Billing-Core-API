@@ -1,10 +1,10 @@
-package billing_core_api.domain;
+package billing_core_api.domain.subscription;
 
-import billing_core_api.auditing.AuditingClass;
+import billing_core_api.config.AuditingClass;
+import billing_core_api.domain.plan.Plan;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;

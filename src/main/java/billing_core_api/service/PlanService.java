@@ -1,7 +1,7 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.Plan;
-import billing_core_api.dto.PlanRequest;
+import billing_core_api.domain.plan.Plan;
+import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
@@ -39,8 +39,12 @@ public class PlanService {
     @Cacheable(value = "plan", key = "#id")
     public Plan findById(Long id){
 
-       return repository.findById(id)
+        System.out.println("BUSCANDO PLANO NO BANCO: " + id);
+
+        var plan = repository.findById(id)
                 .orElseThrow(() -> new PlanNotFound("Plan not exist, try again later"));
+
+        return plan;
     }
 
     public List<Plan> listAll(){

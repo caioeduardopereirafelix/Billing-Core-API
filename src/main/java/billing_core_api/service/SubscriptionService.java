@@ -1,9 +1,8 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.Subscription;
-import billing_core_api.domain.SubscriptionStatus;
-import billing_core_api.dto.SubscriptionRequest;
-import billing_core_api.dto.SubscriptionResponse;
+import billing_core_api.domain.subscription.Subscription;
+import billing_core_api.domain.subscription.SubscriptionStatus;
+import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;
 import billing_core_api.messaging.SubscriptionEventPublisher;
@@ -11,15 +10,11 @@ import billing_core_api.messaging.event.SubscriptionCreatedEvent;
 import billing_core_api.repository.PlanRepository;
 import billing_core_api.repository.SubscriptionRepository;
 import jakarta.transaction.Transactional;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDate;
 import java.util.List;

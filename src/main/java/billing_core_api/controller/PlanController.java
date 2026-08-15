@@ -1,8 +1,7 @@
 package billing_core_api.controller;
 
-import billing_core_api.domain.Plan;
-import billing_core_api.dto.PlanRequest;
-import billing_core_api.dto.PlanResponse;
+import billing_core_api.dto.plan.PlanRequest;
+import billing_core_api.dto.plan.PlanResponse;
 import billing_core_api.repository.PlanRepository;
 import billing_core_api.service.PlanService;
 import jakarta.validation.Valid;
