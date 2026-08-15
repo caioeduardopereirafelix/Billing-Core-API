@@ -2,7 +2,7 @@ spring:
 
   data:
     redis:
-      host: localhosts
+      host: localhost
       port: 6379
 
   application:
@@ -16,7 +16,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
 
     show-sql: true
 
@@ -32,3 +32,6 @@ spring:
 
 server:
   port: 8080
+
+
+//adicionar tempo de token, secret

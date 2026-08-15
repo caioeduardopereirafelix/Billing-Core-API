@@ -1,4 +1,4 @@
-package billing_core_api.auditing;
+package billing_core_api.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;

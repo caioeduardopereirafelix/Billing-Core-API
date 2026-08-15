@@ -1,15 +1,17 @@
-package billing_core_api.domain;
+package billing_core_api.domain.plan;
 
+import billing_core_api.domain.subscription.BillingCycle;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
 @Getter
 @Setter
-public class Plan {
+public class Plan implements Serializable {
 
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id

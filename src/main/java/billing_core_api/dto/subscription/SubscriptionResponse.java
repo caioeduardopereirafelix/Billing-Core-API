@@ -1,8 +1,4 @@
-package billing_core_api.dto;
-
-import billing_core_api.domain.BillingCycle;
-
-import java.math.BigDecimal;
+package billing_core_api.dto.subscription;
 
 public record SubscriptionResponse(String customerEmail,
                                    String customerName,

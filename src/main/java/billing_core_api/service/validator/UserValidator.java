@@ -1,0 +1,57 @@
+package billing_core_api.service.validator;
+
+import billing_core_api.domain.user.User;
+import billing_core_api.exception.InvalidFieldException;
+import billing_core_api.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+@Component
+@RequiredArgsConstructor
+public class UserValidator {
+
+    private final UserRepository repository;
+
+    public void validatePassword(String senha){
+        if (senha.isBlank()) {
+            throw new InvalidFieldException("Password","Password cannot be blank");
+        }
+    }
+
+    public void validateEmail(String email){
+        if (repository.findByEmail(email).isPresent()) {
+            throw new billing_core_api.service.validator.EmailAlreadyExistException("Email already exists");
+        }
+    }
+
+    public void validateName(String name){
+        if (name.isBlank()) {
+            throw new InvalidFieldException("Name","Name cannot be blank");
+        }
+    }
+
+    public void validate(User user) {
+        if (existUser(user)){
+            throw new billing_core_api.service.validator.RegistrationDuplicated("Autor já cadastrado");
+        }
+    }
+
+
+    private boolean existUser(User user){
+
+        Optional<User> userFound =
+                repository.findByEmail(user.getEmail());
+
+        if (user.getId() == null){
+            return userFound.isPresent();
+        }
+
+        return !user.getId().equals(userFound.get().getId()) && userFound.isPresent();
+    }
+
+    //melhorar essa validacao, pois nao esta lancando excecao personalizada e melhorar os metodos para validar
+    //usuario existe ou nao, password e email
+}

@@ -1,9 +1,9 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.Plan;
-import billing_core_api.domain.Subscription;
-import billing_core_api.domain.SubscriptionStatus;
-import billing_core_api.dto.SubscriptionRequest;
+import billing_core_api.domain.plan.Plan;
+import billing_core_api.domain.subscription.Subscription;
+import billing_core_api.domain.subscription.SubscriptionStatus;
+import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;
 import billing_core_api.messaging.SubscriptionEventPublisher;

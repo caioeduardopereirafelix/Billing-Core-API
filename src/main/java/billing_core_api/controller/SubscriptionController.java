@@ -1,12 +1,11 @@
 package billing_core_api.controller;
 
-import billing_core_api.domain.Subscription;
-import billing_core_api.dto.SubscriptionRequest;
-import billing_core_api.dto.SubscriptionResponse;
+import billing_core_api.domain.subscription.Subscription;
+import billing_core_api.dto.subscription.SubscriptionRequest;
+import billing_core_api.dto.subscription.SubscriptionResponse;
 import billing_core_api.service.SubscriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

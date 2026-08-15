@@ -1,6 +1,5 @@
-package billing_core_api.dto;
+package billing_core_api.dto.subscription;
 
-import billing_core_api.domain.Plan;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
