@@ -1,4 +1,4 @@
-package billing_core_api.dto;
+package billing_core_api.dto.plan;
 
 import java.math.BigDecimal;
 

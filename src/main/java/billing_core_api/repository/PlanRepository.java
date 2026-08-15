@@ -1,6 +1,6 @@
 package billing_core_api.repository;
 
-import billing_core_api.domain.Plan;
+import billing_core_api.domain.plan.Plan;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
