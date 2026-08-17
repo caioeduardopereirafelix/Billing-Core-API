@@ -34,4 +34,4 @@ server:
   port: 8080
 
 
-//adicionar tempo de token, secret
+#adicionar tempo de token, secret

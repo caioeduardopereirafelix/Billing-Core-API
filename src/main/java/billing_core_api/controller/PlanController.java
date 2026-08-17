@@ -2,6 +2,7 @@ package billing_core_api.controller;
 
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.PlanResponse;
+import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.repository.PlanRepository;
 import billing_core_api.service.PlanService;
 import jakarta.validation.Valid;
@@ -28,7 +29,7 @@ public class PlanController {
         var response = new PlanResponse(planToSave.getId(),
                 planToSave.getName(),
                 planToSave.getPrice(),
-                planToSave.isActive());
+                planToSave.getActive());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -40,7 +41,7 @@ public class PlanController {
         var response = new PlanResponse(plan.getId(),
                 plan.getName(),
                 plan.getPrice(),
-                plan.isActive());
+                plan.getActive());
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -52,7 +53,7 @@ public class PlanController {
                 .map(plan -> new PlanResponse(plan.getId(),
                         plan.getName(),
                         plan.getPrice(),
-                        plan.isActive())).toList();
+                        plan.getActive())).toList();
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -61,17 +62,17 @@ public class PlanController {
     public ResponseEntity<PlanResponse> cancelPlan(@Valid @PathVariable Long id){
         var plan = service.disabledPlan(id);
 
-        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.isActive());
+        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.getActive());
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
 
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PlanResponse> changePrice(@Valid @PathVariable Long id, @RequestBody BigDecimal newPrice){
-        var plan = service.putPrice(id, newPrice);
+    public ResponseEntity<PlanResponse> changePrice(@PathVariable Long id, @Valid @RequestBody UpdatePlanRequest planRequest){
+        var plan = service.putPlan(id, planRequest);
 
-        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.isActive());
+        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.getActive());
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
 

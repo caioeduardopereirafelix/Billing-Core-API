@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -71,11 +72,14 @@ public class SubscriptionService {
                 .orElseThrow(() -> new SubscriptionNotFoundException("Subscription Not Found"));
     }
 
+
+    @Cacheable(value = "subscriptions")
     public List<Subscription> listAll(){
         List<Subscription> all = repository.findAll();
         return all;
     }
 
+    @CachePut(value = "subscriptions", key = "#id")
     public Subscription cancelSubscription(Long id){
         var subscription = repository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException(id.toString()));
