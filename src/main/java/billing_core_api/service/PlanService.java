@@ -2,11 +2,13 @@ package billing_core_api.service;
 
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
+import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -47,37 +49,38 @@ public class PlanService {
         return plan;
     }
 
+    @Cacheable(value = "plan")
     public List<Plan> listAll(){
 
         List<Plan> all = repository.findAll();
         return all;
     }
 
-    @CacheEvict(value = "plan", key = "#id")
+    @CachePut(value = "plan", key = "#id")
     public Plan disabledPlan(Long id){
 
         var plan = repository.findById(id)
                 .orElseThrow(() -> new PlanNotFound(id.toString()));
 
-        if (!plan.isActive()){
+        if (!plan.getActive()){
             throw new IllegalArgumentException("Plan already disabled");
         }
 
         plan.setActive(false);
 
-        return plan;
+        return repository.save(plan);
     }
 
-    public Plan putPrice(Long id, BigDecimal novoPreco) {
+    @CachePut(value = "plan", key = "#id")
+    public Plan putPlan(Long id, UpdatePlanRequest planRequest) {
 
         Plan plan = repository.findById(id)
                 .orElseThrow(() -> new PlanNotFound(id.toString()));
 
-        if (novoPreco == null || novoPreco.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("The price must be greater than 0.");
-        }
-
-        plan.setPrice(novoPreco);
+        plan.setName(planRequest.newNamePlan());
+        plan.setPrice(planRequest.newPrice());
+        plan.setDescription(planRequest.newDescription());
+        plan.setBillingCycle(planRequest.newBillingCycle());
 
         return repository.save(plan);
     }
