@@ -37,6 +37,12 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,"/v1/auth","/v1/auth/**")
                                 .permitAll()
 
+                                .requestMatchers(HttpMethod.GET).permitAll()
+                                .requestMatchers(HttpMethod.PUT).permitAll()
+                                .requestMatchers(HttpMethod.DELETE).permitAll()
+                                .requestMatchers(HttpMethod.POST).permitAll()
+                                .requestMatchers(HttpMethod.PATCH).permitAll()
+
                                 .requestMatchers(HttpMethod.POST,"/user","/user/**")
                                 .permitAll()
 
