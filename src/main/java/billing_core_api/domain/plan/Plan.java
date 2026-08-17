@@ -31,7 +31,7 @@ public class Plan implements Serializable {
     private BillingCycle billingCycle;
 
     @Column(nullable = false)
-    private boolean active;
+    private Boolean active;
 
 
 }

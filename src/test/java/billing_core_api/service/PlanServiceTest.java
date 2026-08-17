@@ -3,9 +3,15 @@ package billing_core_api.service;
 import billing_core_api.domain.subscription.BillingCycle;
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
+import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,11 +30,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class PlanServiceTest {
 
+    private Validator validator;
+
     @Mock
     private PlanRepository repository;
 
     @InjectMocks
     private PlanService service;
+
+    @BeforeEach
+    void setUp() {
+        ValidatorFactory factory =
+                Validation.buildDefaultValidatorFactory();
+
+        validator = factory.getValidator();
+    }
 
     @Test
     @DisplayName("Deve criar um plano com sucesso")
@@ -56,7 +72,7 @@ public class PlanServiceTest {
         assertNotNull(plan);
         assertEquals("Basic", plan.getName());
         assertEquals(BigDecimal.valueOf(49.90), plan.getPrice());
-        assertTrue(plan.isActive());
+        assertTrue(plan.getActive());
 
         verify(repository).save(any(Plan.class));
     }
@@ -145,7 +161,7 @@ public class PlanServiceTest {
 
         Plan resultado = service.disabledPlan(1L);
 
-        assertFalse(resultado.isActive());
+        assertFalse(resultado.getActive());
     }
 
     @Test
@@ -166,12 +182,24 @@ public class PlanServiceTest {
     }
 
     @Test
-    @DisplayName("Atualizar preco com sucesso")
-    void deveAtualizarPreco() {
+    @DisplayName("Deve atualizar plan com sucesso")
+    void deveAtualizarPlan() {
 
         Plan plan = new Plan();
         plan.setId(1L);
+        plan.setName("Plano Básico");
         plan.setPrice(BigDecimal.TEN);
+        plan.setDescription("Plano básico");
+        plan.setBillingCycle(BillingCycle.MONTHLY);
+        plan.setActive(true);
+
+        UpdatePlanRequest request = new UpdatePlanRequest(
+                "Plano Premium",
+                BigDecimal.valueOf(99.90),
+                "Plano premium completo",
+                BillingCycle.MONTHLY,
+                true
+        );
 
         when(repository.findById(1L))
                 .thenReturn(Optional.of(plan));
@@ -179,37 +207,41 @@ public class PlanServiceTest {
         when(repository.save(any(Plan.class)))
                 .thenReturn(plan);
 
-        Plan resultado = service.putPrice(
-                1L,
-                BigDecimal.valueOf(99.90)
-        );
+        Plan resultado = service.putPlan(1L, request);
 
-        assertEquals(
-                BigDecimal.valueOf(99.90),
-                resultado.getPrice()
-        );
+        assertEquals("Plano Premium", resultado.getName());
+        assertEquals(BigDecimal.valueOf(99.90), resultado.getPrice());
+        assertEquals("Plano premium completo", resultado.getDescription());
+        assertEquals(BillingCycle.MONTHLY, resultado.getBillingCycle());
+        assertTrue(resultado.getActive());
 
+        verify(repository).findById(1L);
         verify(repository).save(plan);
     }
 
     @Test
-    @DisplayName("Lanca excecao para preco menor ou igual a zero")
-    void deveLancarExcecaoQuandoPrecoForInvalido() {
+    @DisplayName("Deve lançar exceção quando plan não existir")
+    void deveLancarExcecaoQuandoPlanNaoExistir() {
 
-        Plan plan = new Plan();
+        UpdatePlanRequest request = new UpdatePlanRequest(
+                "Plano Premium",
+                BigDecimal.valueOf(99.90),
+                "Plano premium",
+                BillingCycle.MONTHLY,
+                true
+        );
 
         when(repository.findById(1L))
-                .thenReturn(Optional.of(plan));
+                .thenReturn(Optional.empty());
 
         assertThrows(
-                IllegalArgumentException.class,
-                () -> service.putPrice(
-                        1L,
-                        BigDecimal.ZERO
-                )
+                PlanNotFound.class,
+                () -> service.putPlan(1L, request)
         );
 
         verify(repository, never()).save(any());
     }
+
+    //criar testes
 
 }
