@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +29,7 @@ public class SubscriptionService {
     private final SubscriptionRepository repository;
     private final PlanRepository planRepository;
     private final SubscriptionEventPublisher eventPublisher;
+    private final CalculateEndSubscription calculateEndSubscription;
     private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
 
@@ -42,6 +43,11 @@ public class SubscriptionService {
         subscription.setPlan(plan);
         subscription.setAmount(plan.getPrice());
         subscription.setStartDate(LocalDate.now());
+
+        LocalDateTime endDate =
+                calculateEndSubscription.calculateEndDate(subscription.getStartDate(),
+                                                            plan.getBillingCycle());
+        subscription.setEndDate(endDate);
         subscription.setStatus(SubscriptionStatus.ACTIVED);
         subscription.setCreatedDate(LocalDate.now());
 
@@ -83,7 +89,6 @@ public class SubscriptionService {
     public Subscription cancelSubscription(Long id){
         var subscription = repository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException(id.toString()));
-
         subscription.cancel();
 
         return subscription;

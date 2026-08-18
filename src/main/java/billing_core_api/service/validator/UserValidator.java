@@ -1,7 +1,9 @@
 package billing_core_api.service.validator;
 
 import billing_core_api.domain.user.User;
+import billing_core_api.exception.EmailAlreadyExistException;
 import billing_core_api.exception.InvalidFieldException;
+import billing_core_api.exception.RegistrationDuplicated;
 import billing_core_api.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,7 @@ public class UserValidator {
 
     public void validateEmail(String email){
         if (repository.findByEmail(email).isPresent()) {
-            throw new billing_core_api.service.validator.EmailAlreadyExistException("Email already exists");
+            throw new EmailAlreadyExistException("Email already exists");
         }
     }
 
@@ -35,7 +37,7 @@ public class UserValidator {
 
     public void validate(User user) {
         if (existUser(user)){
-            throw new billing_core_api.service.validator.RegistrationDuplicated("Autor já cadastrado");
+            throw new RegistrationDuplicated("Autor já cadastrado");
         }
     }
 
