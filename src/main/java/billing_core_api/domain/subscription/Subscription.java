@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -22,7 +23,7 @@ public class Subscription extends AuditingClass {
         }
 
         this.status = SubscriptionStatus.CANCELED;
-        this.endDate = LocalDate.now();
+        this.endDate = LocalDateTime.now();
     }
 
     @Id
@@ -46,7 +47,7 @@ public class Subscription extends AuditingClass {
     @Column(nullable = false)
     private LocalDate startDate;
 
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
