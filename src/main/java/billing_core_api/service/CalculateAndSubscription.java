@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Component
-public class CalculateEndSubscription {
+public class CalculateAndSubscription {
 
     public LocalDateTime calculateEndDate(LocalDate startDate, BillingCycle billingCycle){
 
