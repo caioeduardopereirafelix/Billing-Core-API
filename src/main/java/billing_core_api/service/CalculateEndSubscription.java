@@ -1,6 +1,6 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.subscription.BillingCycle;
+import billing_core_api.enums.BillingCycle;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
