@@ -1,6 +1,6 @@
 package billing_core_api.domain.plan;
 
-import billing_core_api.domain.subscription.BillingCycle;
+import billing_core_api.enums.BillingCycle;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
