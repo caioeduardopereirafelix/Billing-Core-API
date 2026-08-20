@@ -29,7 +29,7 @@ public class SubscriptionService {
     private final SubscriptionRepository repository;
     private final PlanRepository planRepository;
     private final SubscriptionEventPublisher eventPublisher;
-    private final CalculateEndSubscription calculateEndSubscription;
+    private final CalculateAndSubscription calculateEndSubscription;
     private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
 
