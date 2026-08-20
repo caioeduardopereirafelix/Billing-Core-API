@@ -2,6 +2,7 @@ package billing_core_api.domain.subscription;
 
 import billing_core_api.config.AuditingClass;
 import billing_core_api.domain.plan.Plan;
+import billing_core_api.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
