@@ -1,7 +1,7 @@
 package billing_core_api.service;
 
 import billing_core_api.domain.subscription.Subscription;
-import billing_core_api.domain.subscription.SubscriptionStatus;
+import billing_core_api.enums.SubscriptionStatus;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;

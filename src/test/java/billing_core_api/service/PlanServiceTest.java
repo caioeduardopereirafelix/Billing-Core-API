@@ -1,13 +1,12 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.subscription.BillingCycle;
+import billing_core_api.enums.BillingCycle;
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -197,8 +196,8 @@ public class PlanServiceTest {
                 "Plano Premium",
                 BigDecimal.valueOf(99.90),
                 "Plano premium completo",
-                BillingCycle.MONTHLY,
-                true
+                BillingCycle.MONTHLY
+
         );
 
         when(repository.findById(1L))
@@ -227,8 +226,7 @@ public class PlanServiceTest {
                 "Plano Premium",
                 BigDecimal.valueOf(99.90),
                 "Plano premium",
-                BillingCycle.MONTHLY,
-                true
+                BillingCycle.MONTHLY
         );
 
         when(repository.findById(1L))

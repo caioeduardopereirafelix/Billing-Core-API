@@ -1,6 +1,7 @@
 package billing_core_api.domain.user;
 
 import billing_core_api.config.AuditingClass;
+import billing_core_api.domain.subscription.Subscription;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
