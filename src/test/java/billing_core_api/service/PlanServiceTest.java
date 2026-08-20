@@ -1,17 +1,14 @@
 package billing_core_api.service;
 
-import billing_core_api.enums.BillingCycle;
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.UpdatePlanRequest;
+import billing_core_api.enums.BillingCycle;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
+import billing_core_api.service.PlanService;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,223 +20,158 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class PlanServiceTest {
+class PlanServiceTest {
 
-    private Validator validator;
-
-    @Mock
-    private PlanRepository repository;
-
+    @Mock PlanRepository repository;
     @InjectMocks
-    private PlanService service;
+    PlanService service;
+
+    private Plan plan;
+    private PlanRequest request;
 
     @BeforeEach
     void setUp() {
-        ValidatorFactory factory =
-                Validation.buildDefaultValidatorFactory();
+        plan = new Plan();
+        plan.setId(1L);
+        plan.setName("Premium");
+        plan.setDescription("Premium plan");
+        plan.setPrice(new BigDecimal("99.90"));
+        plan.setBillingCycle(BillingCycle.MONTHLY);
+        plan.setActive(true);
 
-        validator = factory.getValidator();
+        request = new PlanRequest(
+                "Premium",
+                "Premium plan",
+                new BigDecimal("99.90"),
+                BillingCycle.MONTHLY
+        );
     }
 
     @Test
-    @DisplayName("Deve criar um plano com sucesso")
-    void deveCriarPlano() {
+    void shouldCreatePlanSuccessfully() {
+        when(repository.existsByName("Premium")).thenReturn(false);
+        when(repository.save(any(Plan.class))).thenAnswer(inv -> {
+            Plan saved = inv.getArgument(0);
+            saved.setId(1L);
+            return saved;
+        });
 
-        PlanRequest request = new PlanRequest(
-                "Basic",
-                "Plano básico",
-                BigDecimal.valueOf(49.90),
-                BillingCycle.MONTHLY
-        );
+        Plan result = service.createPlan(request);
 
-        when(repository.existsByName("Basic"))
-                .thenReturn(false);
+        assertNotNull(result);
+        assertEquals("Premium", result.getName());
+        assertEquals(new BigDecimal("99.90"), result.getPrice());
+        assertEquals(BillingCycle.MONTHLY, result.getBillingCycle());
+        assertTrue(result.getActive());
 
-        when(repository.save(any(Plan.class)))
-                .thenAnswer(invocation -> {
-                    Plan plan = invocation.getArgument(0);
-                    plan.setId(1L);
-                    return plan;
-                });
-
-        Plan plan = service.createPlan(request);
-
-        assertNotNull(plan);
-        assertEquals("Basic", plan.getName());
-        assertEquals(BigDecimal.valueOf(49.90), plan.getPrice());
-        assertTrue(plan.getActive());
-
+        verify(repository).existsByName("Premium");
         verify(repository).save(any(Plan.class));
     }
 
     @Test
-    @DisplayName("Não deve permitir plano duplicado")
-    void deveLancarExcecaoQuandoPlanoJaExiste() {
+    void shouldThrowWhenCreatingDuplicatedPlan() {
+        when(repository.existsByName("Premium")).thenReturn(true);
 
-        PlanRequest request = new PlanRequest(
-                "Basic",
-                "Plano básico",
-                BigDecimal.TEN,
-                BillingCycle.MONTHLY
-        );
-
-        when(repository.existsByName("Basic"))
-                .thenReturn(true);
-
-        assertThrows(
-                PlanAlreadyExists.class,
-                () -> service.createPlan(request)
-        );
+        assertThrows(PlanAlreadyExists.class, () -> service.createPlan(request));
 
         verify(repository, never()).save(any());
     }
 
     @Test
-    @DisplayName("Deve Buscar Plano Por id")
-    void deveBuscarPlanoPorId() {
+    void shouldFindPlanById() {
+        when(repository.findById(1L)).thenReturn(Optional.of(plan));
 
-        Plan plan = new Plan();
-        plan.setId(1L);
+        Plan result = service.findById(1L);
 
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(plan));
-
-        Plan resultado = service.findById(1L);
-
-        assertEquals(1L, resultado.getId());
-
+        assertSame(plan, result);
         verify(repository).findById(1L);
     }
 
     @Test
-    @DisplayName("Deve Lancar Excecao Quando Plano Nao Existe")
-    void deveLancarExcecaoQuandoPlanoNaoExiste() {
+    void shouldThrowWhenPlanDoesNotExist() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        when(repository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                PlanNotFound.class,
-                () -> service.findById(1L)
-        );
+        assertThrows(PlanNotFound.class, () -> service.findById(99L));
     }
 
     @Test
-    @DisplayName("Lista todos os planos")
-    void deveListarTodosOsPlanos() {
+    void shouldListAllPlans() {
+        when(repository.findAll()).thenReturn(List.of(plan));
 
-        List<Plan> planos = List.of(
-                new Plan(),
-                new Plan()
-        );
+        List<Plan> result = service.listAll();
 
-        when(repository.findAll())
-                .thenReturn(planos);
-
-        List<Plan> resultado = service.listAll();
-
-        assertEquals(2, resultado.size());
-
+        assertEquals(1, result.size());
+        assertSame(plan, result.get(0));
         verify(repository).findAll();
     }
 
     @Test
-    @DisplayName("Deve desativar Plano")
-    void deveDesativarPlano() {
+    void shouldDisableActivePlan() {
+        when(repository.findById(1L)).thenReturn(Optional.of(plan));
+        when(repository.save(plan)).thenReturn(plan);
 
-        Plan plan = new Plan();
-        plan.setId(1L);
-        plan.setActive(true);
+        Plan result = service.disabledPlan(1L);
 
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(plan));
-
-        Plan resultado = service.disabledPlan(1L);
-
-        assertFalse(resultado.getActive());
-    }
-
-    @Test
-    @DisplayName("Deve lancar excecao quando plano ja esta desativado")
-    void deveLancarExcecaoQuandoPlanoJaEstaDesativado() {
-
-        Plan plan = new Plan();
-        plan.setId(1L);
-        plan.setActive(false);
-
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(plan));
-
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> service.disabledPlan(1L)
-        );
-    }
-
-    @Test
-    @DisplayName("Deve atualizar plan com sucesso")
-    void deveAtualizarPlan() {
-
-        Plan plan = new Plan();
-        plan.setId(1L);
-        plan.setName("Plano Básico");
-        plan.setPrice(BigDecimal.TEN);
-        plan.setDescription("Plano básico");
-        plan.setBillingCycle(BillingCycle.MONTHLY);
-        plan.setActive(true);
-
-        UpdatePlanRequest request = new UpdatePlanRequest(
-                "Plano Premium",
-                BigDecimal.valueOf(99.90),
-                "Plano premium completo",
-                BillingCycle.MONTHLY
-
-        );
-
-        when(repository.findById(1L))
-                .thenReturn(Optional.of(plan));
-
-        when(repository.save(any(Plan.class)))
-                .thenReturn(plan);
-
-        Plan resultado = service.putPlan(1L, request);
-
-        assertEquals("Plano Premium", resultado.getName());
-        assertEquals(BigDecimal.valueOf(99.90), resultado.getPrice());
-        assertEquals("Plano premium completo", resultado.getDescription());
-        assertEquals(BillingCycle.MONTHLY, resultado.getBillingCycle());
-        assertTrue(resultado.getActive());
-
-        verify(repository).findById(1L);
+        assertFalse(result.getActive());
         verify(repository).save(plan);
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando plan não existir")
-    void deveLancarExcecaoQuandoPlanNaoExistir() {
+    void shouldThrowWhenDisablingAlreadyDisabledPlan() {
+        plan.setActive(false);
+        when(repository.findById(1L)).thenReturn(Optional.of(plan));
 
-        UpdatePlanRequest request = new UpdatePlanRequest(
-                "Plano Premium",
-                BigDecimal.valueOf(99.90),
-                "Plano premium",
-                BillingCycle.MONTHLY
-        );
-
-        when(repository.findById(1L))
-                .thenReturn(Optional.empty());
-
-        assertThrows(
-                PlanNotFound.class,
-                () -> service.putPlan(1L, request)
-        );
+        assertThrows(IllegalArgumentException.class, () -> service.disabledPlan(1L));
 
         verify(repository, never()).save(any());
     }
 
-    //criar testes
+    @Test
+    void shouldThrowWhenDisablingNonExistingPlan() {
+        when(repository.findById(99L)).thenReturn(Optional.empty());
 
+        assertThrows(PlanNotFound.class, () -> service.disabledPlan(99L));
+    }
+
+    @Test
+    void shouldUpdatePlanSuccessfully() {
+        UpdatePlanRequest update = new UpdatePlanRequest(
+                "Enterprise",
+                new BigDecimal("199.90"),
+                "Enterprise plan",
+                BillingCycle.YEARLY
+        );
+
+        when(repository.findById(1L)).thenReturn(Optional.of(plan));
+        when(repository.save(plan)).thenReturn(plan);
+
+        Plan result = service.putPlan(1L, update);
+
+        assertEquals("Enterprise", result.getName());
+        assertEquals(new BigDecimal("199.90"), result.getPrice());
+        assertEquals("Enterprise plan", result.getDescription());
+        assertEquals(BillingCycle.YEARLY, result.getBillingCycle());
+        assertTrue(result.getActive());
+
+        verify(repository).save(plan);
+    }
+
+    @Test
+    void shouldThrowWhenUpdatingNonExistingPlan() {
+        UpdatePlanRequest update = new UpdatePlanRequest(
+                "Enterprise",
+                new BigDecimal("199.90"),
+                "Enterprise plan",
+                BillingCycle.YEARLY
+        );
+
+        when(repository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThrows(PlanNotFound.class, () -> service.putPlan(99L, update));
+
+        verify(repository, never()).save(any());
+    }
 }
