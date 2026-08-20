@@ -1,4 +1,4 @@
-package billing_core_api.domain.subscription;
+package billing_core_api.enums;
 
 public enum SubscriptionStatus {
     ACTIVED,
