@@ -36,7 +36,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 var username = tokenProvider.getUsername(token);
                 var userDetails = userDetailsService.loadUserByUsername(username);
-                Long tenantId = tokenProvider.getTenantId(token);
 
 
 
