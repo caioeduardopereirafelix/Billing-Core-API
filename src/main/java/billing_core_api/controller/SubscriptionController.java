@@ -1,5 +1,6 @@
 package billing_core_api.controller;
 
+import billing_core_api.config.SecurityUtils;
 import billing_core_api.domain.subscription.Subscription;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.dto.subscription.SubscriptionResponse;
@@ -18,10 +19,12 @@ import java.util.List;
 public class SubscriptionController {
 
     private final SubscriptionService service;
+    private final SecurityUtils securityUtils;
 
     @PostMapping
     public ResponseEntity<SubscriptionResponse> createSubscription(@Valid @RequestBody SubscriptionRequest subscriptionRequest){
-        var subscription = service.createSubscription(subscriptionRequest);
+        var authenticatedUser = securityUtils.getAuthenticatedUser();
+        var subscription = service.createSubscription(subscriptionRequest, authenticatedUser);
 
         var response = new SubscriptionResponse(subscription.getCustomerName(),
                 subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
@@ -31,6 +34,14 @@ public class SubscriptionController {
 
     @GetMapping("/{id}")
     public ResponseEntity<SubscriptionResponse> findById(@Valid @PathVariable Long id){
+
+        var authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        if (!authenticatedUser.getId().toString().equals(id)
+                && !authenticatedUser.getRoles().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         var subscription = service.buscarPorId(id);
 
         var response = new SubscriptionResponse(subscription.getCustomerName(),
@@ -56,6 +67,13 @@ public class SubscriptionController {
 
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long id) {
+
+        var authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        if (!authenticatedUser.getId().toString().equals(id)
+                && !authenticatedUser.getRoles().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         Subscription subscription = service.cancelSubscription(id);
 
