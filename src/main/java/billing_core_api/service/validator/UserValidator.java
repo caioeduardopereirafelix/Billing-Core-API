@@ -51,7 +51,7 @@ public class UserValidator {
             return userFound.isPresent();
         }
 
-        return !user.getId().equals(userFound.get().getId()) && userFound.isPresent();
+        return userFound.isPresent() && !user.getId().equals(userFound.get().getId());
     }
 
     //melhorar essa validacao, pois nao esta lancando excecao personalizada e melhorar os metodos para validar
