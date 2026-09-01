@@ -1,6 +1,7 @@
 package billing_core_api.service;
 
 import billing_core_api.domain.subscription.Subscription;
+import billing_core_api.domain.user.User;
 import billing_core_api.enums.SubscriptionStatus;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.exception.PlanNotFound;
@@ -33,13 +34,14 @@ public class SubscriptionService {
     private static final Logger log = LoggerFactory.getLogger(SubscriptionService.class);
 
 
-    public Subscription createSubscription(SubscriptionRequest request){
+    public Subscription createSubscription(SubscriptionRequest request, User user){
         var plan = planRepository.findById(request.planId())
                 .orElseThrow(() -> new PlanNotFound(request.planId().toString()));
 
         var subscription = new Subscription();
         subscription.setCustomerName(request.customerName());
         subscription.setCustomerEmail(request.customerEmail());
+        subscription.setUser(user);
         subscription.setPlan(plan);
         subscription.setAmount(plan.getPrice());
         subscription.setStartDate(LocalDate.now());

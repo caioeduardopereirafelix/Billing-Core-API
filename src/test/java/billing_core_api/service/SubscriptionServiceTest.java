@@ -2,6 +2,7 @@ package billing_core_api.service;
 
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.domain.subscription.Subscription;
+import billing_core_api.domain.user.User;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.enums.BillingCycle;
 import billing_core_api.enums.SubscriptionStatus;
@@ -38,6 +39,7 @@ class SubscriptionServiceTest {
 
     private Plan plan;
     private SubscriptionRequest request;
+    private User user;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +55,8 @@ class SubscriptionServiceTest {
                 "Customer",
                 1L
         );
+
+        user = User.builder().build();
     }
 
     @Test
@@ -68,12 +72,13 @@ class SubscriptionServiceTest {
             return saved;
         });
 
-        Subscription result = service.createSubscription(request);
+        Subscription result = service.createSubscription(request, user);
 
         assertEquals(10L, result.getId());
         assertEquals("Customer", result.getCustomerName());
         assertEquals("customer@email.com", result.getCustomerEmail());
         assertSame(plan, result.getPlan());
+        assertSame(user, result.getUser());
         assertEquals(new BigDecimal("99.90"), result.getAmount());
         assertEquals(today, result.getStartDate());
         assertEquals(end, result.getEndDate());
@@ -88,7 +93,7 @@ class SubscriptionServiceTest {
     void shouldThrowWhenPlanDoesNotExist() {
         when(planRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(PlanNotFound.class, () -> service.createSubscription(request));
+        assertThrows(PlanNotFound.class, () -> service.createSubscription(request, user));
 
         verify(repository, never()).save(any());
         verify(eventPublisher, never()).publishSubscriptionCreated(any());
@@ -100,7 +105,7 @@ class SubscriptionServiceTest {
         when(calculateEndSubscription.calculateEndDate(any(), eq(BillingCycle.MONTHLY)))
                 .thenThrow(new IllegalStateException("calculation failure"));
 
-        assertThrows(IllegalStateException.class, () -> service.createSubscription(request));
+        assertThrows(IllegalStateException.class, () -> service.createSubscription(request, user));
 
         verify(repository, never()).save(any());
         verify(eventPublisher, never()).publishSubscriptionCreated(any());
