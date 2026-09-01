@@ -47,12 +47,22 @@ public class SecurityConfig {
                                 }))
                 .authorizeHttpRequests(auth -> auth
 
-                                .requestMatchers(HttpMethod.GET).permitAll()
-                                .requestMatchers(HttpMethod.PUT).permitAll()
-                                .requestMatchers(HttpMethod.DELETE).permitAll()
-                                .requestMatchers(HttpMethod.POST).permitAll()
-                                .requestMatchers(HttpMethod.PATCH).permitAll()
-                                .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.GET, "/plan/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/plan/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/plan/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/plan/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/plan/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/subscription").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/subscription/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/subscription").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/subscription/{id}/cancel").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/user/{userId}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/user/{userId}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/user/{userId}").hasAnyRole("USER", "ADMIN")
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .build();

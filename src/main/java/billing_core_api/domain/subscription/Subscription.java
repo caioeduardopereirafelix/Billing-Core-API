@@ -2,6 +2,7 @@ package billing_core_api.domain.subscription;
 
 import billing_core_api.config.AuditingClass;
 import billing_core_api.domain.plan.Plan;
+import billing_core_api.domain.user.User;
 import billing_core_api.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -41,6 +42,10 @@ public class Subscription extends AuditingClass {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "plan_id", nullable = false)
     private Plan plan;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;

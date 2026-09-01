@@ -1,5 +1,6 @@
 package billing_core_api.controller;
 
+import billing_core_api.config.SecurityUtils;
 import billing_core_api.domain.mapper.UserMapper;
 import billing_core_api.domain.user.User;
 import billing_core_api.dto.user.CreateUserDTO;
@@ -26,9 +27,10 @@ public class UserController {
     private final UserRepository repository;
     private final UserMapper mapper;
     private final PasswordEncoder encoder;
+    private final SecurityUtils securityUtils;
 
     @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody CreateUserDTO dto) {
+    public ResponseEntity<ResponseUserDTO> createUser(@Valid @RequestBody CreateUserDTO dto) {
 
         var user = userService.createUser(dto);
 
@@ -39,6 +41,14 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity getDetails(@PathVariable String userId){
+
+        var authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        if (!authenticatedUser.getId().toString().equals(userId)
+                && !authenticatedUser.getRoles().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         var idUser = UUID.fromString(userId);
         Optional<User> userOptional = userService.findById(idUser);
 
@@ -53,6 +63,13 @@ public class UserController {
     @DeleteMapping("/{userId}")
     public ResponseEntity deleteUser(@PathVariable("userId") String id){
 
+        var authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        if (!authenticatedUser.getId().toString().equals(id)
+                && !authenticatedUser.getRoles().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         var idUser = UUID.fromString(id);
 
         Optional<User> optionalUser = userService.findById(idUser);
@@ -66,8 +83,15 @@ public class UserController {
 
     @PutMapping("/{userId}")
     public ResponseEntity updateUser(
-            @PathVariable("id")String id,
+            @PathVariable("userId")String id,
             @RequestBody UpdateUserDTO updateUserDTO){
+
+        User authenticatedUser = securityUtils.getAuthenticatedUser();
+
+        if (!authenticatedUser.getId().toString().equals(id)
+                && !authenticatedUser.getRoles().equals("ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         var idUser = UUID.fromString(id);
 
