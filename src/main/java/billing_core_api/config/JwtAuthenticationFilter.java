@@ -24,7 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
+                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
         String authorizationHeader = request.getHeader("Authorization");
 
@@ -35,8 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (tokenProvider.isTokenValid(token)){
 
                 var username = tokenProvider.getUsername(token);
-
                 var userDetails = userDetailsService.loadUserByUsername(username);
+                Long tenantId = tokenProvider.getTenantId(token);
+
+
 
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails,
