@@ -4,6 +4,7 @@ import billing_core_api.config.AuditingClass;
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.domain.user.User;
 import billing_core_api.enums.SubscriptionStatus;
+import billing_core_api.exception.BusinessRuleException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Getter;
@@ -21,7 +22,7 @@ public class Subscription extends AuditingClass {
     public void cancel() {
 
         if (this.status == SubscriptionStatus.CANCELED) {
-            throw new IllegalStateException("Assinatura já cancelada.");
+            throw new BusinessRuleException("Subscription is already canceled");
         }
 
         this.status = SubscriptionStatus.CANCELED;
