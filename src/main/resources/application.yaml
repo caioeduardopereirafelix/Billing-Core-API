@@ -1,7 +1,7 @@
 spring:
 
   config:
-    import: classpath:application-secrets.yaml
+    import: optional:classpath:application-secrets.yaml
 
   data:
     redis:

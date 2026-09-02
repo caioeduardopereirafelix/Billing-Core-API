@@ -1,0 +1,28 @@
+# Build output
+target/
+build/
+
+# VCS & IDE
+.git/
+.gitignore
+.gitattributes
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Maven wrapper (the build stage uses the maven base image's own mvn)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Local-only secret file - must never be baked into the image
+src/main/resources/application-secrets.yaml
+
+# Docs, compose, docker files
+*.md
+docker-compose.yaml
+Dockerfile
+.dockerignore
