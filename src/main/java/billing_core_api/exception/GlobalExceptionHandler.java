@@ -3,6 +3,7 @@ package billing_core_api.exception;
 import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -64,6 +65,22 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage(), List.of());
     }
 
+    // ---------- 401 Unauthorized ----------
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ResponseError handleInvalidCredentials(InvalidCredentialsException e) {
+        return new ResponseError(HttpStatus.UNAUTHORIZED.value(), e.getMessage(), List.of());
+    }
+
+    // ---------- 403 Forbidden ----------
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ResponseError handleAccessDenied(AccessDeniedException e) {
+        return new ResponseError(HttpStatus.FORBIDDEN.value(), e.getMessage(), List.of());
+    }
+
     // ---------- 404 Not Found ----------
 
     @ExceptionHandler({PlanNotFound.class, SubscriptionNotFoundException.class, UserNotFound.class})
@@ -77,7 +94,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             EmailAlreadyExistException.class,
             RegistrationDuplicated.class,
-            PlanAlreadyExists.class
+            PlanAlreadyExists.class,
+            BusinessRuleException.class
     })
     @ResponseStatus(HttpStatus.CONFLICT)
     public ResponseError handleConflict(RuntimeException e) {

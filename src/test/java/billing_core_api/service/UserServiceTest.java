@@ -2,6 +2,7 @@ package billing_core_api.service;
 
 import billing_core_api.domain.user.User;
 import billing_core_api.dto.user.UpdateUserDTO;
+import billing_core_api.exception.UserNotFound;
 import billing_core_api.repository.UserRepository;
 import billing_core_api.service.validator.UserValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,7 +116,7 @@ class UserServiceTest {
 
         when(repository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () -> service.updateUser(id, dto));
+        assertThrows(UserNotFound.class, () -> service.updateUser(id, dto));
 
         verify(repository, never()).save(any());
     }

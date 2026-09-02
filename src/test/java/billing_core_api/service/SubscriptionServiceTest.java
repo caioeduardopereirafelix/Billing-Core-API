@@ -6,6 +6,7 @@ import billing_core_api.domain.user.User;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.enums.BillingCycle;
 import billing_core_api.enums.SubscriptionStatus;
+import billing_core_api.exception.BusinessRuleException;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;
 import billing_core_api.messaging.SubscriptionEventPublisher;
@@ -179,7 +180,7 @@ class SubscriptionServiceTest {
         when(repository.findById(10L)).thenReturn(Optional.of(subscription));
 
         assertThrows(
-                IllegalStateException.class,
+                BusinessRuleException.class,
                 () -> service.cancelSubscription(10L)
         );
     }
