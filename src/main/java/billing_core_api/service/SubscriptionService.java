@@ -14,11 +14,8 @@ import billing_core_api.repository.SubscriptionRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -77,24 +74,20 @@ public class SubscriptionService {
         eventPublisher.publishSubscriptionCreated(event);
 
         return saved;
-
-
     }
 
-    @Cacheable(value = "subscriptions", key = "#id")
+    @Transactional(readOnly = true)
     public Subscription buscarPorId(Long id){
        return repository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException("Subscription Not Found"));
     }
 
-
-    @Cacheable(value = "subscriptions")
+    @Transactional(readOnly = true)
     public List<Subscription> listAll(){
-        List<Subscription> all = repository.findAll();
-        return all;
+        return repository.findAll();
     }
 
-    @CachePut(value = "subscriptions", key = "#id")
+    @Transactional
     public Subscription cancelSubscription(Long id){
         var subscription = repository.findById(id)
                 .orElseThrow(() -> new SubscriptionNotFoundException(id.toString()));
