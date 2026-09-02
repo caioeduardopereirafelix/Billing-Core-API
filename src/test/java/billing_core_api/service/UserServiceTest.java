@@ -1,8 +1,6 @@
 package billing_core_api.service;
 
-import billing_core_api.domain.mapper.UserMapper;
 import billing_core_api.domain.user.User;
-import billing_core_api.dto.user.CreateUserDTO;
 import billing_core_api.dto.user.UpdateUserDTO;
 import billing_core_api.repository.UserRepository;
 import billing_core_api.service.validator.UserValidator;
@@ -23,14 +21,12 @@ import static org.mockito.Mockito.*;
 class UserServiceTest {
 
     @Mock UserRepository repository;
-    @Mock UserMapper mapper;
     @Mock PasswordEncoder encoder;
     @Mock UserValidator validator;
 
     @InjectMocks UserService service;
 
     private User user;
-    private CreateUserDTO createDTO;
 
     @BeforeEach
     void setUp() {
@@ -40,36 +36,6 @@ class UserServiceTest {
                 .email("caio@email.com")
                 .password("old")
                 .build();
-
-        createDTO = new CreateUserDTO("Caio", "caio@email.com", "123456");
-    }
-
-    @Test
-    void shouldCreateUserAndEncodePassword() {
-        when(mapper.toUser(createDTO)).thenReturn(user);
-        when(encoder.encode("123456")).thenReturn("encoded");
-        when(repository.save(user)).thenReturn(user);
-
-        User result = service.createUser(createDTO);
-
-        assertSame(user, result);
-        assertEquals("encoded", user.getPassword());
-        assertNotNull(user.getCreatedDate());
-        assertNotNull(user.getLastModifiedDate());
-
-        verify(validator).validate(user);
-        verify(repository).save(user);
-    }
-
-    @Test
-    void shouldPropagateValidationFailureAndNotSave() {
-        when(mapper.toUser(createDTO)).thenReturn(user);
-        when(encoder.encode("123456")).thenReturn("encoded");
-        doThrow(new RuntimeException("invalid user")).when(validator).validate(user);
-
-        assertThrows(RuntimeException.class, () -> service.createUser(createDTO));
-
-        verify(repository, never()).save(any());
     }
 
     @Test

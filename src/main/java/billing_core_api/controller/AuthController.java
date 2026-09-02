@@ -4,7 +4,6 @@ import billing_core_api.dto.auth.LoginRequestDTO;
 import billing_core_api.dto.auth.ResponseAuthDTO;
 import billing_core_api.dto.auth.ResponseCreatedUser;
 import billing_core_api.dto.user.CreateUserDTO;
-import billing_core_api.dto.user.ResponseUserDTO;
 import billing_core_api.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,10 +23,10 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ResponseCreatedUser> register(@RequestBody @Valid CreateUserDTO request) throws BadRequestException {
-       var login =  authService.register(request);
+    public ResponseEntity<ResponseCreatedUser> register(@RequestBody @Valid CreateUserDTO request) {
+        var user = authService.register(request);
 
-       var response = new ResponseCreatedUser(request.name(), request.email());
+        var response = new ResponseCreatedUser(user.getName(), user.getEmail());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
