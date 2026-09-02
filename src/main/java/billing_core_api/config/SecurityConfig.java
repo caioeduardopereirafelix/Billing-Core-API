@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 }))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/plan/**").hasRole("USER")
