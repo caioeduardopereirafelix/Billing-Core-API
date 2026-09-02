@@ -6,15 +6,15 @@ import billing_core_api.dto.auth.LoginRequestDTO;
 import billing_core_api.dto.auth.ResponseAuthDTO;
 import billing_core_api.dto.user.CreateUserDTO;
 import billing_core_api.enums.RoleTypeEnum;
+import billing_core_api.exception.InvalidCredentialsException;
 import billing_core_api.repository.RoleRepository;
 import billing_core_api.repository.UserRepository;
 import billing_core_api.service.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,20 +64,17 @@ public class AuthService {
         return repository.save(user);
     }
 
-    public ResponseAuthDTO login(LoginRequestDTO dto) throws BadRequestException {
+    public ResponseAuthDTO login(LoginRequestDTO dto) {
 
         try {
+            // authentication provider -> UserDetailsService -> PasswordEncoder.matches -> Authentication
+            var authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
 
-            //authentication provider -> UserDetailsService -> password matches do passwordencoder -> autenticado -> Authentication
-            var authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(dto.email(), dto.password()));
-            String token = tokenProvider.generaToker(authentication);
+            return new ResponseAuthDTO(tokenProvider.generaToker(authentication), expirationTime);
 
-            return new ResponseAuthDTO(token, expirationTime);
-
-        }catch (BadCredentialsException e){
-            throw new BadRequestException("Invalid Credencials");
-        } catch (Exception e) {
-            throw e;
+        } catch (AuthenticationException e) {
+            throw new InvalidCredentialsException("Invalid email or password");
         }
     }
 

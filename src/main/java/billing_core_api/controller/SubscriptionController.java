@@ -33,18 +33,12 @@ public class SubscriptionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SubscriptionResponse> findById(@Valid @PathVariable Long id){
-
-        var authenticatedUser = securityUtils.getAuthenticatedUser();
-
-        if (!authenticatedUser.getId().toString().equals(id)
-                && !authenticatedUser.getRoles().equals("ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+    public ResponseEntity<SubscriptionResponse> findById(@PathVariable Long id){
 
         var subscription = service.buscarPorId(id);
+        securityUtils.requireOwnerOrAdmin(subscription.getUser().getId());
 
-        var response = new SubscriptionResponse(subscription.getCustomerName(),
+        var response = new SubscriptionResponse(subscription.getCustomerEmail(),
                 subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
@@ -68,12 +62,7 @@ public class SubscriptionController {
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long id) {
 
-        var authenticatedUser = securityUtils.getAuthenticatedUser();
-
-        if (!authenticatedUser.getId().toString().equals(id)
-                && !authenticatedUser.getRoles().equals("ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        securityUtils.requireOwnerOrAdmin(service.buscarPorId(id).getUser().getId());
 
         Subscription subscription = service.cancelSubscription(id);
 

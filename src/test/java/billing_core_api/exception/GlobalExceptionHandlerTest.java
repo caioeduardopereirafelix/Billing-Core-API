@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.AmqpException;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,27 @@ class GlobalExceptionHandlerTest {
     void illegalArgument_maps_to_400() throws Exception {
         mvc.perform(get("/t/illegal-argument"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void invalidCredentials_maps_to_401() throws Exception {
+        mvc.perform(get("/t/invalid-credentials"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401));
+    }
+
+    @Test
+    void accessDenied_maps_to_403() throws Exception {
+        mvc.perform(get("/t/access-denied"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
+    void businessRule_maps_to_409() throws Exception {
+        mvc.perform(get("/t/business-rule"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test
@@ -102,6 +124,21 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/illegal-argument")
         void illegalArgument() {
             throw new IllegalArgumentException("bad arg");
+        }
+
+        @GetMapping("/invalid-credentials")
+        void invalidCredentials() {
+            throw new InvalidCredentialsException("nope");
+        }
+
+        @GetMapping("/access-denied")
+        void accessDenied() {
+            throw new AccessDeniedException("forbidden");
+        }
+
+        @GetMapping("/business-rule")
+        void businessRule() {
+            throw new BusinessRuleException("conflict");
         }
 
         @GetMapping("/field-is-blank")

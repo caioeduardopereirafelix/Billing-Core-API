@@ -88,6 +88,13 @@ class AuthRegistrationFlowTest {
         // 4. token authenticates and carries ROLE_USER (GET /plan requires it)
         mvc.perform(get("/plan").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+
+        // 5. ownership: the user may read its own record but not someone else's
+        String bearer = "Bearer " + token;
+        mvc.perform(get("/user/" + saved.getId()).header("Authorization", bearer))
+                .andExpect(status().isOk());
+        mvc.perform(get("/user/" + java.util.UUID.randomUUID()).header("Authorization", bearer))
+                .andExpect(status().isForbidden());
     }
 
     @Test

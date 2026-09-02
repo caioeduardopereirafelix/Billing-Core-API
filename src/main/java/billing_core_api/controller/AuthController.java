@@ -7,7 +7,6 @@ import billing_core_api.dto.user.CreateUserDTO;
 import billing_core_api.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseAuthDTO login(@RequestBody @Valid LoginRequestDTO request) throws BadRequestException {
+    public ResponseAuthDTO login(@RequestBody @Valid LoginRequestDTO request) {
         return authService.login(request);
     }
 }
