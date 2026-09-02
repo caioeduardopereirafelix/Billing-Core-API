@@ -1,15 +1,20 @@
 package billing_core_api.exception;
 
+import org.springframework.amqp.AmqpException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    // ---------- 400 Bad Request ----------
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -30,9 +35,64 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler({EmailAlreadyExistException.class, RegistrationDuplicated.class})
+    @ExceptionHandler(FieldIsBlank.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handleFieldIsBlank(FieldIsBlank e) {
+        return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handleUnreadableBody(HttpMessageNotReadableException e) {
+        return new ResponseError(HttpStatus.BAD_REQUEST.value(), "Malformed or missing request body", List.of());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handleTypeMismatch(MethodArgumentTypeMismatchException e) {
+        String message = "Parameter '" + e.getName() + "' has an invalid value: " + e.getValue();
+        return new ResponseError(
+                HttpStatus.BAD_REQUEST.value(),
+                message,
+                List.of(new ErrorField(e.getName(), "invalid value"))
+        );
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseError handleIllegalArgument(IllegalArgumentException e) {
+        return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage(), List.of());
+    }
+
+    // ---------- 404 Not Found ----------
+
+    @ExceptionHandler({PlanNotFound.class, SubscriptionNotFoundException.class, UserNotFound.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseError handleNotFound(RuntimeException e) {
+        return new ResponseError(HttpStatus.NOT_FOUND.value(), e.getMessage(), List.of());
+    }
+
+    // ---------- 409 Conflict ----------
+
+    @ExceptionHandler({
+            EmailAlreadyExistException.class,
+            RegistrationDuplicated.class,
+            PlanAlreadyExists.class
+    })
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ResponseError handleDuplicated(RuntimeException e) {
+    public ResponseError handleConflict(RuntimeException e) {
         return new ResponseError(HttpStatus.CONFLICT.value(), e.getMessage(), List.of());
+    }
+
+    // ---------- 503 Service Unavailable ----------
+
+    @ExceptionHandler(AmqpException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ResponseError handleMessagingDown(AmqpException e) {
+        return new ResponseError(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                "Messaging broker is unavailable, please retry later",
+                List.of()
+        );
     }
 }
