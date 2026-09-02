@@ -3,6 +3,7 @@ package billing_core_api.service;
 import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.UpdatePlanRequest;
+import billing_core_api.exception.BusinessRuleException;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
@@ -63,7 +64,7 @@ public class PlanService {
                 .orElseThrow(() -> new PlanNotFound(id.toString()));
 
         if (!plan.getActive()){
-            throw new IllegalArgumentException("Plan already disabled");
+            throw new BusinessRuleException("Plan is already inactive");
         }
 
         plan.setActive(false);

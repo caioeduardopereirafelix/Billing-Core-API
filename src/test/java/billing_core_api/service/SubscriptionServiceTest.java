@@ -6,6 +6,7 @@ import billing_core_api.domain.user.User;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.enums.BillingCycle;
 import billing_core_api.enums.SubscriptionStatus;
+import billing_core_api.exception.BusinessRuleException;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;
 import billing_core_api.messaging.SubscriptionEventPublisher;
@@ -22,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,8 +34,7 @@ class SubscriptionServiceTest {
     @Mock SubscriptionRepository repository;
     @Mock PlanRepository planRepository;
     @Mock SubscriptionEventPublisher eventPublisher;
-    @Mock
-    CalculateAndSubscription calculateEndSubscription;
+    @Mock CalculateAndSubscription calculateEndSubscription;
 
     @InjectMocks SubscriptionService service;
 
@@ -50,17 +51,17 @@ class SubscriptionServiceTest {
         plan.setBillingCycle(BillingCycle.MONTHLY);
         plan.setActive(true);
 
-        request = new SubscriptionRequest(
-                "customer@email.com",
-                "Customer",
-                1L
-        );
+        request = new SubscriptionRequest(1L);
 
-        user = User.builder().build();
+        user = User.builder()
+                .id(UUID.randomUUID())
+                .name("Caio Silva")
+                .email("caio@email.com")
+                .build();
     }
 
     @Test
-    void shouldCreateSubscriptionSuccessfully() {
+    void shouldCreateSubscriptionUsingTheAuthenticatedUserAsCustomer() {
         LocalDate today = LocalDate.now();
         LocalDateTime end = today.plusMonths(1).atTime(23, 59, 59);
 
@@ -75,10 +76,11 @@ class SubscriptionServiceTest {
         Subscription result = service.createSubscription(request, user);
 
         assertEquals(10L, result.getId());
-        assertEquals("Customer", result.getCustomerName());
-        assertEquals("customer@email.com", result.getCustomerEmail());
-        assertSame(plan, result.getPlan());
+        // customer identity is a snapshot taken from the account, not from the request
+        assertEquals("Caio Silva", result.getCustomerName());
+        assertEquals("caio@email.com", result.getCustomerEmail());
         assertSame(user, result.getUser());
+        assertSame(plan, result.getPlan());
         assertEquals(new BigDecimal("99.90"), result.getAmount());
         assertEquals(today, result.getStartDate());
         assertEquals(end, result.getEndDate());
@@ -87,6 +89,29 @@ class SubscriptionServiceTest {
 
         verify(repository).save(any(Subscription.class));
         verify(eventPublisher).publishSubscriptionCreated(any());
+    }
+
+    @Test
+    void shouldPublishEventCarryingTheAccountEmail() {
+        LocalDate today = LocalDate.now();
+
+        when(planRepository.findById(1L)).thenReturn(Optional.of(plan));
+        when(calculateEndSubscription.calculateEndDate(any(), eq(BillingCycle.MONTHLY)))
+                .thenReturn(today.plusMonths(1).atTime(23, 59, 59));
+        when(repository.save(any(Subscription.class))).thenAnswer(inv -> {
+            Subscription saved = inv.getArgument(0);
+            saved.setId(10L);
+            return saved;
+        });
+
+        service.createSubscription(request, user);
+
+        ArgumentCaptor<billing_core_api.messaging.event.SubscriptionCreatedEvent> captor =
+                ArgumentCaptor.forClass(billing_core_api.messaging.event.SubscriptionCreatedEvent.class);
+        verify(eventPublisher).publishSubscriptionCreated(captor.capture());
+
+        assertEquals("caio@email.com", captor.getValue().customerEmail());
+        assertEquals("Caio Silva", captor.getValue().customerName());
     }
 
     @Test
@@ -179,7 +204,7 @@ class SubscriptionServiceTest {
         when(repository.findById(10L)).thenReturn(Optional.of(subscription));
 
         assertThrows(
-                IllegalStateException.class,
+                BusinessRuleException.class,
                 () -> service.cancelSubscription(10L)
         );
     }
