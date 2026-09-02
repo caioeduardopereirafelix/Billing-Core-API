@@ -4,6 +4,7 @@ import billing_core_api.domain.plan.Plan;
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.enums.BillingCycle;
+import billing_core_api.exception.BusinessRuleException;
 import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
@@ -124,7 +125,7 @@ class PlanServiceTest {
         plan.setActive(false);
         when(repository.findById(1L)).thenReturn(Optional.of(plan));
 
-        assertThrows(IllegalArgumentException.class, () -> service.disabledPlan(1L));
+        assertThrows(BusinessRuleException.class, () -> service.disabledPlan(1L));
 
         verify(repository, never()).save(any());
     }

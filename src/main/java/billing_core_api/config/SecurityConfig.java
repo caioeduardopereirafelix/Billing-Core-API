@@ -60,7 +60,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/subscription").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/subscription/{id}/cancel").hasRole("ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/user").permitAll()
                         .requestMatchers(HttpMethod.GET, "/user/{userId}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/user/{userId}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/user/{userId}").hasAnyRole("USER", "ADMIN")

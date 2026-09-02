@@ -131,17 +131,19 @@ class DTOValidationTest {
 
     @Test
     void shouldAcceptValidSubscriptionRequest() {
-        var dto = new SubscriptionRequest(
-                "caio@email.com",
-                "Caio",
-                1L
-        );
+        var dto = new SubscriptionRequest(1L);
         assertTrue(validator.validate(dto).isEmpty());
     }
 
     @Test
-    void shouldRejectInvalidSubscriptionRequest() {
-        var dto = new SubscriptionRequest("", "", 0L);
+    void shouldRejectNullPlanId() {
+        var dto = new SubscriptionRequest(null);
+        assertFalse(validator.validate(dto).isEmpty());
+    }
+
+    @Test
+    void shouldRejectNonPositivePlanId() {
+        var dto = new SubscriptionRequest(0L);
         assertFalse(validator.validate(dto).isEmpty());
     }
 }

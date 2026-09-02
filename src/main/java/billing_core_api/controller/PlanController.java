@@ -21,7 +21,6 @@ import java.util.List;
 public class PlanController {
 
     private final PlanService service;
-    private final PlanRepository repository;
 
     @PostMapping
     public ResponseEntity<PlanResponse> createPlan(@Valid @RequestBody PlanRequest request){
@@ -48,7 +47,6 @@ public class PlanController {
     }
 
     @GetMapping
-    @PreAuthorize("USER")
     public ResponseEntity<List<PlanResponse>> listAll(){
         var response = service.listAll()
                 .stream()
