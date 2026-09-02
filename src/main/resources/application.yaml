@@ -3,38 +3,50 @@ spring:
   config:
     import: optional:classpath:application-secrets.yaml
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-
   application:
     name: billing-core-api
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/billing
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/billing}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
       ddl-auto: validate
-
-    show-sql: true
-
-    properties:
-      hibernate:
-        format_sql: true
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:guest}
+    password: ${SPRING_RABBITMQ_PASSWORD:guest}
+
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+  info:
+    env:
+      enabled: true
 
-#adicionar tempo de token, secret
+# Optional bootstrap admin - created on startup only when both are set and
+# no user with that e-mail exists. Leave unset to skip.
+app:
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}

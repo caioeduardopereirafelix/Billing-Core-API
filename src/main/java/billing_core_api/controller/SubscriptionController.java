@@ -26,7 +26,7 @@ public class SubscriptionController {
         var authenticatedUser = securityUtils.getAuthenticatedUser();
         var subscription = service.createSubscription(subscriptionRequest, authenticatedUser);
 
-        var response = new SubscriptionResponse(subscription.getCustomerName(),
+        var response = new SubscriptionResponse(subscription.getCustomerEmail(),
                 subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
