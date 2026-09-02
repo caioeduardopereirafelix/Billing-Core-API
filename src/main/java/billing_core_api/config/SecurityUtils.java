@@ -31,10 +31,7 @@ public class SecurityUtils {
         return hasRole("ADMIN");
     }
 
-    /**
-     * Allows the call only when the authenticated user owns the resource
-     * ({@code ownerId}) or is an administrator; otherwise raises 403.
-     */
+
     public void requireOwnerOrAdmin(UUID ownerId) {
         if (!getAuthenticatedUser().getId().equals(ownerId) && !isAdmin()) {
             throw new AccessDeniedException("You do not have permission to access this resource");
