@@ -8,10 +8,10 @@ import billing_core_api.dto.auth.ResponseAuthDTO;
 import billing_core_api.dto.user.CreateUserDTO;
 import billing_core_api.enums.RoleTypeEnum;
 import billing_core_api.exception.EmailAlreadyExistException;
+import billing_core_api.exception.InvalidCredentialsException;
 import billing_core_api.repository.RoleRepository;
 import billing_core_api.repository.UserRepository;
 import billing_core_api.service.validator.UserValidator;
-import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,19 +113,19 @@ class AuthServiceTest {
     }
 
     @Test
-    void shouldTranslateBadCredentialsToBadRequestException() {
+    void shouldTranslateAuthenticationFailureToInvalidCredentials() {
         LoginRequestDTO dto = new LoginRequestDTO("caio@email.com", "wrong");
 
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("bad credentials"));
 
-        assertThrows(BadRequestException.class, () -> service.login(dto));
+        assertThrows(InvalidCredentialsException.class, () -> service.login(dto));
 
         verify(tokenProvider, never()).generaToker(any());
     }
 
     @Test
-    void shouldPropagateUnexpectedAuthenticationException() {
+    void shouldPropagateUnexpectedNonAuthenticationException() {
         LoginRequestDTO dto = new LoginRequestDTO("caio@email.com", "123456");
 
         RuntimeException exception = new RuntimeException("database down");
