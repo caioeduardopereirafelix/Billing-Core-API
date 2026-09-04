@@ -26,7 +26,7 @@ public class Subscription extends AuditingClass {
         }
 
         this.status = SubscriptionStatus.CANCELED;
-        this.endDate = LocalDateTime.now();
+        this.canceledAt = LocalDateTime.now();
     }
 
     @Id
@@ -54,7 +54,12 @@ public class Subscription extends AuditingClass {
     @Column(nullable = false)
     private LocalDate startDate;
 
+
     private LocalDateTime endDate;
+
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

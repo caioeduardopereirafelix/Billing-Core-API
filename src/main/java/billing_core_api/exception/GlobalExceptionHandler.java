@@ -15,7 +15,7 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ---------- 400 Bad Request ----------
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -65,7 +65,6 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.BAD_REQUEST.value(), e.getMessage(), List.of());
     }
 
-    // ---------- 401 Unauthorized ----------
 
     @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
@@ -73,7 +72,14 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.UNAUTHORIZED.value(), e.getMessage(), List.of());
     }
 
-    // ---------- 403 Forbidden ----------
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    @ResponseStatus(HttpStatus.PAYMENT_REQUIRED)
+    public ResponseError handleInsufficientBalance(InsufficientBalanceException e) {
+        return new ResponseError(HttpStatus.PAYMENT_REQUIRED.value(), e.getMessage(), List.of());
+    }
+
+
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
@@ -81,15 +87,13 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.FORBIDDEN.value(), e.getMessage(), List.of());
     }
 
-    // ---------- 404 Not Found ----------
+
 
     @ExceptionHandler({PlanNotFound.class, SubscriptionNotFoundException.class, UserNotFound.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseError handleNotFound(RuntimeException e) {
         return new ResponseError(HttpStatus.NOT_FOUND.value(), e.getMessage(), List.of());
     }
-
-    // ---------- 409 Conflict ----------
 
     @ExceptionHandler({
             EmailAlreadyExistException.class,
@@ -102,7 +106,7 @@ public class GlobalExceptionHandler {
         return new ResponseError(HttpStatus.CONFLICT.value(), e.getMessage(), List.of());
     }
 
-    // ---------- 503 Service Unavailable ----------
+
 
     @ExceptionHandler(AmqpException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
