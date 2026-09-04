@@ -16,6 +16,7 @@ application-secrets.yaml
 
 ### Local env ###
 .env
+.env.prod
 
 ### IntelliJ IDEA ###
 .idea

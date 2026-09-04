@@ -8,12 +8,10 @@ import billing_core_api.exception.PlanAlreadyExists;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.repository.PlanRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -41,13 +39,8 @@ public class PlanService {
 
     @Cacheable(value = "plan", key = "#id")
     public Plan findById(Long id){
-
-        System.out.println("BUSCANDO PLANO NO BANCO: " + id);
-
-        var plan = repository.findById(id)
+        return repository.findById(id)
                 .orElseThrow(() -> new PlanNotFound("Plan not exist, try again later"));
-
-        return plan;
     }
 
     @Cacheable(value = "plan")

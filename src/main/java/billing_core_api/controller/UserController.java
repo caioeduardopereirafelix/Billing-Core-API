@@ -3,9 +3,11 @@ package billing_core_api.controller;
 import billing_core_api.config.SecurityUtils;
 import billing_core_api.domain.mapper.UserMapper;
 import billing_core_api.domain.user.User;
+import billing_core_api.dto.user.DepositRequest;
 import billing_core_api.dto.user.ResponseUserDTO;
 import billing_core_api.dto.user.UpdateUserDTO;
 import billing_core_api.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,18 @@ public class UserController {
     private final UserService userService;
     private final UserMapper mapper;
     private final SecurityUtils securityUtils;
+
+    @GetMapping("/me")
+    public ResponseEntity<ResponseUserDTO> me() {
+        UUID id = securityUtils.getAuthenticatedUser().getId();
+        return ResponseEntity.ok(mapper.toUserResponse(userService.getById(id)));
+    }
+
+    @PostMapping("/me/deposit")
+    public ResponseEntity<ResponseUserDTO> deposit(@Valid @RequestBody DepositRequest request) {
+        UUID id = securityUtils.getAuthenticatedUser().getId();
+        return ResponseEntity.ok(mapper.toUserResponse(userService.deposit(id, request.amount())));
+    }
 
     @GetMapping("/{userId}")
     public ResponseEntity<ResponseUserDTO> getDetails(@PathVariable String userId) {
