@@ -12,13 +12,13 @@ Recommended box: **Ubuntu 24.04 LTS, 1 vCPU / 2 GB RAM / 20 GB disk**
 ## 1. Provision the VM
 
 ```bash
-# as root on a fresh Ubuntu 24.04 box
+
 apt-get update && apt-get -y upgrade
 curl -fsSL https://get.docker.com | sh              # Docker Engine + compose plugin
 adduser --disabled-password --gecos "" deploy
 usermod -aG docker deploy
 
-# firewall: only SSH + HTTP + HTTPS
+
 apt-get install -y ufw
 ufw allow OpenSSH && ufw allow 80 && ufw allow 443
 ufw --force enable
@@ -34,13 +34,6 @@ git clone https://github.com/caioeduardopereirafelix/Billing-Core-API.git
 cd Billing-Core-API
 
 cp .env.prod.example .env.prod
-# fill in every CHANGE_ME:
-#   DB_PASSWORD / SPRING_DATASOURCE_PASSWORD  -> openssl rand -hex 24  (same value)
-#   RABBITMQ_PASS / SPRING_RABBITMQ_PASSWORD  -> openssl rand -hex 24  (same value)
-#   JWT_SECRET                                -> openssl rand -hex 48
-#   ADMIN_PASSWORD                            -> openssl rand -hex 16
-#   PUBLIC_HOST                               -> your domain (e.g. billing.example.com)
-# then drop `tls internal` from deploy/Caddyfile so Caddy gets a real Let's Encrypt cert.
 
 docker compose --env-file .env.prod -f docker-compose.prod.yaml up -d --build
 ```
@@ -69,12 +62,9 @@ Dumps land in the `db_backups` volume (`billing-prod_db_backups`). Interval and
 retention come from `BACKUP_INTERVAL_SECONDS` / `BACKUP_KEEP` in `.env.prod`.
 
 ```bash
-# list
 docker compose --env-file .env.prod -f docker-compose.prod.yaml exec db-backup ls -lh /backups
-# copy the latest dump to the host
 docker compose --env-file .env.prod -f docker-compose.prod.yaml cp \
   db-backup:/backups/ ./db-dumps/
-# restore
 gunzip -c billing-YYYYMMDDTHHMMSSZ.sql.gz | \
   docker compose --env-file .env.prod -f docker-compose.prod.yaml exec -T postgres \
   psql -U billing -d billing
