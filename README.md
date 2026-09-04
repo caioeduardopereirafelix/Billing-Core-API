@@ -1,107 +1,140 @@
-# Billing Platform
+# Billing Core API
 
-Plataforma de assinaturas (subscription billing) construída como dois microsserviços independentes em Java + Spring Boot, comunicando-se de forma assíncrona e resiliente via RabbitMQ.
-
-## Destaques técnicos
-
-- **Arquitetura orientada a eventos** entre dois serviços desacoplados, sem chamadas diretas entre eles
-- **Mensageria resiliente**: acknowledgement manual, Dead Letter Queue e retry — nenhuma mensagem se perde silenciosamente
-- **Idempotência real**: garante que o mesmo evento nunca é processado duas vezes, mesmo com reentrega
-- **Modelagem orientada ao domínio de negócio**: planos configuráveis, valores de assinatura congelados no momento da contratação
-- **Rastreabilidade ponta a ponta** via `correlationId`, do momento da publicação até o consumo
+API de billing de assinaturas em Java + Spring Boot. Cuida do domínio de negócio
+— usuários, planos, assinaturas e carteira pré‑paga — e publica eventos de forma
+assíncrona para o [`notification-worker`](https://github.com/caioeduardopereirafelix/notification-worker-with-billing-core-api),
+que trata os efeitos colaterais (e‑mail de boas‑vindas).
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    subgraph billing-core-api["billing-core-api (porta 8080)"]
-        A[Subscription / Plan] --> B[REST Controllers]
-        B --> C[SubscriptionEventPublisher]
+    FE["Frontend<br/>Bootstrap + JS"] -->|HTTPS| CADDY[Caddy]
+    CADDY -->|proxy| API
+
+    subgraph billing["billing-core-api :8080"]
+        API[REST Controllers] --> SVC[Services]
+        SVC --> PG1[("PostgreSQL<br/>billing")]
+        SVC --> PUB[SubscriptionEventPublisher]
     end
 
-    subgraph rabbitmq["RabbitMQ"]
-        D[(user.exchange)] --> E[(welcome.queue)]
-        E -.mensagem falha N vezes.-> F[(DLQ)]
-    end
+    PUB -->|SubscriptionCreatedEvent| EX(["subscription.exchange"])
+    EX -->|success.subscription| Q(["welcome.subscription"])
+    Q -->|5 retries falharam| DLX(["dead.exchange"])
+    DLX --> DLQ(["dead.queue"])
 
-    subgraph notification-worker["notification-worker (porta 8081)"]
-        G[WelcomeListener] --> H[NotificationService]
-        H --> I[ProcessedEventRepository]
+    subgraph worker["notification-worker"]
+        Q --> L[WelcomeListener] --> NS[NotificationService]
+        NS --> PG2[("PostgreSQL<br/>notification_worker")]
     end
-
-    C -- publica evento --> D
-    E -- consome evento --> G
 ```
 
-`billing-core-api` cuida do domínio de negócio — planos, assinaturas e endpoints REST. `notification-worker` consome eventos publicados no RabbitMQ e cuida dos efeitos colaterais assíncronos, como o e-mail de boas-vindas. Os dois são projetos Maven independentes, com ciclo de vida e escalabilidade próprios — se o envio de e-mail vira gargalo, o `notification-worker` escala sozinho, sem tocar no serviço principal.
+O `billing-core-api` nunca chama o worker diretamente: publica um
+`SubscriptionCreatedEvent` no exchange `subscription.exchange` com um
+`correlationId` para rastreio, e segue seu fluxo. Se o worker cair, as
+assinaturas continuam sendo criadas.
 
-### Fluxo ponta a ponta
+## Stack
 
-1. Cliente faz `POST /subscriptions` no `billing-core-api`.
-2. `SubscriptionService` associa o plano escolhido e persiste a assinatura.
-3. `SubscriptionEventPublisher` publica um `SubscriptionCreatedEvent` no exchange `user.exchange`, com um `correlationId` único para rastreio.
-4. RabbitMQ roteia a mensagem para a `welcome.queue`.
-5. `notification-worker` consome via `WelcomeListener` e envia o e-mail de boas-vindas.
-6. Falhas repetidas movem a mensagem para a **Dead Letter Queue**, garantindo que nada se perde e nada trava a fila.
-
-## Stack técnica
-
-`Java` · `Spring Boot` · `Spring Data JPA` · `Spring AMQP (RabbitMQ)` · `PostgreSQL` · `Docker` · `Testcontainers`
-
-## Endpoints
-
-### `billing-core-api`
-
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/subscriptions` | Cria uma nova assinatura |
-| GET | `/subscriptions/{id}` | Busca assinatura por ID |
-| GET | `/subscriptions` | Lista todas as assinaturas |
-| PATCH | `/subscriptions/{id}/cancelar` | Cancela uma assinatura |
-| POST | `/plans` | Cria um novo plano |
-| GET | `/plans/{id}` | Busca plano por ID |
-| GET | `/plans` | Lista planos ativos |
-| PATCH | `/plans/{id}/desativar` | Desativa um plano |
-
-### `notification-worker`
-
-Sem API REST voltada ao usuário — consome eventos da fila `welcome.queue` de forma assíncrona.
-
-## Decisões de design
-
-**`Plan` como entidade, não enum** — planos são configuráveis via banco (nome, preço, ciclo de cobrança), pensando em evolução para além de um projeto de estudo. O valor de cada assinatura fica congelado no momento da contratação, então alterar o preço de um plano não afeta assinaturas já existentes.
-
-**Dead Letter Queue** — mensagens que falham repetidamente (ex: serviço de e-mail indisponível) são movidas para uma fila separada, evitando tanto loop infinito de reentrega quanto perda silenciosa do evento.
-
-**Idempotência via `correlationId`** — como o RabbitMQ garante entrega *at-least-once*, o consumidor verifica se o evento já foi processado antes de agir, evitando efeitos colaterais duplicados (como dois e-mails de boas-vindas para o mesmo cliente).
+`Java 21` · `Spring Boot 3.4` (Web, Security, Data JPA, AMQP, Actuator, Cache) ·
+`PostgreSQL` · `Flyway` · `JWT (jjwt)` · `MapStruct` · `Docker` · `Caddy`
 
 ## Como rodar
 
-```bash
-# Sobe o RabbitMQ com management UI
-docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
+**Desenvolvimento** (Postgres + RabbitMQ em container, app via Maven):
 
-# Em terminais separados
-cd billing-core-api && mvn spring-boot:run
-cd notification-worker && mvn spring-boot:run
+```bash
+docker compose up -d postgres rabbitmq
+./mvnw spring-boot:run        # exige JDK 21
 ```
 
-Management UI do RabbitMQ disponível em `http://localhost:15672`.
+**Stack completa com HTTPS + frontend** (`.env.prod` a partir de `.env.prod.example`):
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yaml up -d --build
+```
+
+Sobe `app` (não‑root), `postgres` e `rabbitmq` (sem portas expostas ao host),
+`caddy` (80/443, serve o frontend e faz proxy da API) e `db-backup` (pg_dump
+periódico). Frontend em `https://localhost`.
+
+Toda a configuração vem de variável de ambiente
+(`SPRING_DATASOURCE_*`, `SPRING_RABBITMQ_*`, `JWT_SECRET`, `JWT_EXPIRATION`,
+`ADMIN_EMAIL`, `ADMIN_PASSWORD`). Sem `application-secrets.yaml` presente, o
+`import` é opcional e os valores vêm do ambiente.
+
+## Autenticação e autorização
+
+- `POST /auth/register` → cria o usuário com `ROLE_USER`.
+- `POST /auth/login` → `{ token, expiresIn }`. O JWT (HS512) carrega `sub` e
+  `roles`, usado pelo `JwtAuthenticationFilter` em cada request.
+- Papéis `ROLE_USER` / `ROLE_ADMIN` são semeados pelo Flyway. Um admin é criado
+  no boot quando `ADMIN_EMAIL` / `ADMIN_PASSWORD` estão setados e ainda não
+  existe conta com aquele e‑mail.
+- Recursos de um usuário (perfil, assinaturas) só são acessíveis pelo dono ou
+  por um admin (`SecurityUtils.requireOwnerOrAdmin`).
+
+## Endpoints
+
+| Método | Rota | Acesso | Descrição |
+|---|---|---|---|
+| POST | `/auth/register` | público | cria conta |
+| POST | `/auth/login` | público | autentica, devolve JWT |
+| GET | `/user/me` | autenticado | perfil + saldo |
+| POST | `/user/me/deposit` | autenticado | adiciona saldo (`{ amount }`) |
+| GET/PUT/DELETE | `/user/{id}` | dono ou admin | perfil |
+| GET | `/plan` · `/plan/{id}` | USER/ADMIN | lista / detalha planos |
+| POST | `/plan` | ADMIN | cria plano |
+| PUT | `/plan/{id}` | ADMIN | atualiza plano |
+| PATCH | `/plan/{id}/cancel` | ADMIN | desativa plano |
+| POST | `/subscription` | USER | assina um plano (`{ planId }`), debita o saldo |
+| GET | `/subscription/me` | USER/ADMIN | assinaturas do próprio usuário |
+| GET | `/subscription/{id}` | dono ou admin | detalha assinatura |
+| GET | `/subscription` | ADMIN | todas as assinaturas |
+| PATCH | `/subscription/{id}/cancel` | dono ou admin | cancela |
+| GET | `/actuator/health` | público | health / liveness / readiness |
+
+## Fluxo de assinatura
+
+1. `POST /subscription { planId }` com JWT de `ROLE_USER`.
+2. O plano precisa existir e estar **ativo**, senão `409`.
+3. O **saldo pré‑pago** do usuário precisa cobrir o preço do plano, senão `402`.
+   O preço é debitado do saldo e **congelado** na assinatura (mudar o preço do
+   plano depois não afeta assinaturas existentes).
+4. `endDate` é calculado a partir do ciclo de cobrança (`MONTHLY` / `QUARTERLY` /
+   `YEARLY`).
+5. Um `SubscriptionCreatedEvent` é publicado no RabbitMQ.
+6. No cancelamento, `canceledAt` registra o momento; `endDate` (fim do período
+   contratado) é preservado.
+
+## Tratamento de erros
+
+`GlobalExceptionHandler` mapeia toda exceção para um status HTTP e um corpo
+`{ status, error, fieldsError }`:
+
+| Status | Quando |
+|---|---|
+| 400 | validação de payload, JSON malformado, tipo de parâmetro inválido |
+| 401 | credenciais inválidas / sem autenticação |
+| 402 | saldo insuficiente para assinar |
+| 403 | autenticado mas sem permissão no recurso |
+| 404 | plano / assinatura / usuário inexistente |
+| 409 | e‑mail já cadastrado, plano duplicado, regra de negócio (ex.: cancelar assinatura já cancelada) |
+| 503 | broker de mensageria indisponível |
+
+## Frontend
+
+`frontend/` — SPA em Bootstrap 5 + JavaScript puro, servida pelo Caddy no mesmo
+domínio da API (sem CORS). Login/registro, lista de planos, assinatura,
+carteira (saldo + depósito) e "minhas assinaturas" com cancelamento. A seção de
+criação de plano só aparece para admin (checando a claim `roles` do JWT).
 
 ## Testes
 
-Testes unitários dos services, e teste de integração com Testcontainers cobrindo o fluxo completo de publicação e consumo de eventos via RabbitMQ real.
-
 ```bash
-mvn test
+./mvnw test        # JDK 21
 ```
 
-## Estrutura do repositório
-
-```
-.
-├── billing-core-api/
-│   └── src/main/java/.../{domain,repository,service,controller,messaging,dto,exception}
-└── notification-worker/
-    └── src/main/java/.../{messaging,domain,repository,service,exception}
-```
+Cobre services (Mockito), controllers (`@WebMvcTest`), validação de DTOs,
+mapeamento de exceções e fluxos ponta a ponta (`@SpringBootTest` + `MockMvc`):
+registro → login → depósito → assinatura → cancelamento.
