@@ -7,11 +7,13 @@ import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.enums.BillingCycle;
 import billing_core_api.enums.SubscriptionStatus;
 import billing_core_api.exception.BusinessRuleException;
+import billing_core_api.exception.InsufficientBalanceException;
 import billing_core_api.exception.PlanNotFound;
 import billing_core_api.exception.SubscriptionNotFoundException;
 import billing_core_api.messaging.SubscriptionEventPublisher;
 import billing_core_api.repository.PlanRepository;
 import billing_core_api.repository.SubscriptionRepository;
+import billing_core_api.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +35,7 @@ class SubscriptionServiceTest {
 
     @Mock SubscriptionRepository repository;
     @Mock PlanRepository planRepository;
+    @Mock UserRepository userRepository;
     @Mock SubscriptionEventPublisher eventPublisher;
     @Mock CalculateAndSubscription calculateEndSubscription;
 
@@ -57,6 +60,7 @@ class SubscriptionServiceTest {
                 .id(UUID.randomUUID())
                 .name("Caio Silva")
                 .email("caio@email.com")
+                .balance(new BigDecimal("1000.00"))
                 .build();
     }
 
@@ -66,6 +70,7 @@ class SubscriptionServiceTest {
         LocalDateTime end = today.plusMonths(1).atTime(23, 59, 59);
 
         when(planRepository.findById(1L)).thenReturn(Optional.of(plan));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(calculateEndSubscription.calculateEndDate(today, BillingCycle.MONTHLY)).thenReturn(end);
         when(repository.save(any(Subscription.class))).thenAnswer(inv -> {
             Subscription saved = inv.getArgument(0);
@@ -86,9 +91,25 @@ class SubscriptionServiceTest {
         assertEquals(end, result.getEndDate());
         assertEquals(SubscriptionStatus.ACTIVED, result.getStatus());
         assertNotNull(result.getCreatedDate());
+        // the plan price is charged against the balance
+        assertEquals(new BigDecimal("900.10"), user.getBalance());
 
         verify(repository).save(any(Subscription.class));
         verify(eventPublisher).publishSubscriptionCreated(any());
+    }
+
+    @Test
+    void shouldRejectWhenBalanceIsBelowThePlanPrice() {
+        user.setBalance(new BigDecimal("50.00"));
+        when(planRepository.findById(1L)).thenReturn(Optional.of(plan));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+
+        assertThrows(InsufficientBalanceException.class,
+                () -> service.createSubscription(request, user));
+
+        assertEquals(new BigDecimal("50.00"), user.getBalance()); // untouched
+        verify(repository, never()).save(any());
+        verify(eventPublisher, never()).publishSubscriptionCreated(any());
     }
 
     @Test
@@ -96,6 +117,7 @@ class SubscriptionServiceTest {
         LocalDate today = LocalDate.now();
 
         when(planRepository.findById(1L)).thenReturn(Optional.of(plan));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(calculateEndSubscription.calculateEndDate(any(), eq(BillingCycle.MONTHLY)))
                 .thenReturn(today.plusMonths(1).atTime(23, 59, 59));
         when(repository.save(any(Subscription.class))).thenAnswer(inv -> {
@@ -127,6 +149,7 @@ class SubscriptionServiceTest {
     @Test
     void shouldPropagateEndDateCalculatorFailureAndNotPublishEvent() {
         when(planRepository.findById(1L)).thenReturn(Optional.of(plan));
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(calculateEndSubscription.calculateEndDate(any(), eq(BillingCycle.MONTHLY)))
                 .thenThrow(new IllegalStateException("calculation failure"));
 
@@ -144,6 +167,20 @@ class SubscriptionServiceTest {
         when(repository.findById(10L)).thenReturn(Optional.of(subscription));
 
         assertSame(subscription, service.buscarPorId(10L));
+    }
+
+    @Test
+    void shouldListSubscriptionsOfAGivenUser() {
+        Subscription s1 = new Subscription();
+        s1.setId(1L);
+        Subscription s2 = new Subscription();
+        s2.setId(2L);
+        when(repository.findByUser_IdOrderByStartDateDesc(user.getId())).thenReturn(List.of(s1, s2));
+
+        List<Subscription> result = service.listByUser(user.getId());
+
+        assertEquals(List.of(s1, s2), result);
+        verify(repository).findByUser_IdOrderByStartDateDesc(user.getId());
     }
 
     @Test
@@ -170,18 +207,20 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    void shouldCancelSubscription() {
+    void shouldCancelSubscriptionRecordingTheCancellationDate() {
+        LocalDateTime periodEnd = LocalDateTime.of(2030, 1, 1, 0, 0);
         Subscription subscription = new Subscription();
         subscription.setId(10L);
         subscription.setStatus(SubscriptionStatus.ACTIVED);
-        subscription.setEndDate(LocalDateTime.of(2030, 1, 1, 0, 0));
+        subscription.setEndDate(periodEnd);
 
         when(repository.findById(10L)).thenReturn(Optional.of(subscription));
 
         Subscription result = service.cancelSubscription(10L);
 
         assertEquals(SubscriptionStatus.CANCELED, result.getStatus());
-        assertNotNull(result.getEndDate());
+        assertNotNull(result.getCanceledAt());
+        assertEquals(periodEnd, result.getEndDate()); // the contracted end is left untouched
         verify(repository).findById(10L);
     }
 

@@ -3,18 +3,17 @@ package billing_core_api.config;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class TokenProvider {
 
     @Value("${jwt.expiration}")
@@ -23,18 +22,21 @@ public class TokenProvider {
     @Value("${jwt.secret}")
     private String secret;
 
-    //generate token -> ao criar um usuario geta automatico o token para quem esta logando
     public String generaToker(Authentication authentication){
         var user = (UserDetails) authentication.getPrincipal();
-        return buildToken(user.getUsername());
+        var roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+        return buildToken(user.getUsername(), roles);
     }
 
-    private String buildToken(String username) {
+    private String buildToken(String username, List<String> roles) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + expirationTime);
 
         return Jwts.builder()
                 .subject(username)
+                .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiration)
                 .signWith(getSigningKey())
@@ -44,9 +46,6 @@ public class TokenProvider {
     private SecretKey getSigningKey(){
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
-
-    //valide toke ≥ ao passo no JwtAuthenticationFilter ele extrai  o `token` do header e valida se e um token valido
-
 
     public boolean isTokenValid(String token){
         try{
@@ -58,16 +57,19 @@ public class TokenProvider {
     }
 
     private Claims getClaims(String token) {
-
         return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
     }
-    //extract informations -> extrair informacoes do token
 
     public String getUsername(String token){
         return getClaims(token).getSubject();
+    }
+    
+    public List<String> getRoles(String token){
+        Object roles = getClaims(token).get("roles");
+        return roles instanceof List<?> ? (List<String>) roles : List.of();
     }
 }

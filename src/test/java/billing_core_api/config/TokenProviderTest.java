@@ -91,5 +91,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
             assertEquals("caio@email.com", provider.getUsername(token));
         }
+
+        @Test
+        void shouldEmbedRolesInTheToken() {
+            User admin = (User) User.withUsername("admin@email.com")
+                    .password("password")
+                    .authorities("ROLE_USER", "ROLE_ADMIN")
+                    .build();
+
+            String token = provider.generaToker(
+                    new UsernamePasswordAuthenticationToken(admin, null, admin.getAuthorities())
+            );
+
+            assertTrue(provider.getRoles(token).containsAll(java.util.List.of("ROLE_USER", "ROLE_ADMIN")));
+        }
     }
 

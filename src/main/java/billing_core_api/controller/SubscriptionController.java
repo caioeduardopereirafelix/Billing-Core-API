@@ -26,50 +26,46 @@ public class SubscriptionController {
         var authenticatedUser = securityUtils.getAuthenticatedUser();
         var subscription = service.createSubscription(subscriptionRequest, authenticatedUser);
 
-        var response = new SubscriptionResponse(subscription.getCustomerEmail(),
-                subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
+        return ResponseEntity.status(HttpStatus.CREATED).body(SubscriptionResponse.from(subscription));
+    }
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+    @GetMapping("/me")
+    public ResponseEntity<List<SubscriptionResponse>> listMine(){
+        var user = securityUtils.getAuthenticatedUser();
+
+        var response = service.listByUser(user.getId())
+                .stream()
+                .map(SubscriptionResponse::from)
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<SubscriptionResponse> findById(@PathVariable Long id){
-
         var subscription = service.buscarPorId(id);
         securityUtils.requireOwnerOrAdmin(subscription.getUser().getId());
 
-        var response = new SubscriptionResponse(subscription.getCustomerEmail(),
-                subscription.getCustomerName(), subscription.getPlan().getName(), subscription.getStatus().toString());
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.ok(SubscriptionResponse.from(subscription));
     }
 
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> listAll(){
         var response = service.listAll()
                 .stream()
-                .map(subscription -> new SubscriptionResponse(
-                        subscription.getCustomerEmail(),
-                        subscription.getCustomerName(),
-                        subscription.getPlan().getName(),
-                        subscription.getStatus().toString()
-                ))
+                .map(SubscriptionResponse::from)
                 .toList();
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long id) {
-
-        securityUtils.requireOwnerOrAdmin(service.buscarPorId(id).getUser().getId());
-
-        Subscription subscription = service.cancelSubscription(id);
-
-        SubscriptionResponse response = new SubscriptionResponse(subscription.getCustomerEmail(),subscription.getCustomerName(),subscription.getPlan().getName(), subscription.getStatus().toString());
 
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long id) {
+        securityUtils.requireOwnerOrAdmin(service.buscarPorId(id).getUser().getId());
 
+        Subscription subscription = service.cancelSubscription(id);
+
+        return ResponseEntity.ok(SubscriptionResponse.from(subscription));
+    }
 }

@@ -51,17 +51,20 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/plan/**").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/plan/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/plan/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/plan/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/plan/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/plan/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/subscription").hasRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/subscription/me").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/subscription/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/subscription").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/subscription/{id}/cancel").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/subscription/{id}/cancel").hasAnyRole("USER", "ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/user/me").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/user/me/deposit").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/user/{userId}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/user/{userId}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/user/{userId}").hasAnyRole("USER", "ADMIN")
