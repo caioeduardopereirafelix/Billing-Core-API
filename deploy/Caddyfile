@@ -1,6 +1,4 @@
-# Local testing: `tls internal` -> Caddy's own CA issues a cert for `localhost`.
-# Real deploy: set PUBLIC_HOST to your domain and drop `tls internal` - Caddy
-# then provisions a Let's Encrypt cert automatically.
+
 
 {$PUBLIC_HOST} {
 	tls internal
