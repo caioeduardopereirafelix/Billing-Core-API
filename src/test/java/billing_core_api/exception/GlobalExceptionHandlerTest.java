@@ -74,6 +74,13 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void insufficientBalance_maps_to_402() throws Exception {
+        mvc.perform(get("/t/insufficient-balance"))
+                .andExpect(status().isPaymentRequired())
+                .andExpect(jsonPath("$.status").value(402));
+    }
+
+    @Test
     void fieldIsBlank_maps_to_400() throws Exception {
         mvc.perform(get("/t/field-is-blank"))
                 .andExpect(status().isBadRequest());
@@ -139,6 +146,11 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/business-rule")
         void businessRule() {
             throw new BusinessRuleException("conflict");
+        }
+
+        @GetMapping("/insufficient-balance")
+        void insufficientBalance() {
+            throw new InsufficientBalanceException("not enough credit");
         }
 
         @GetMapping("/field-is-blank")

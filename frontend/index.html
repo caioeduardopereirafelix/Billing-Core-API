@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-br" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Billing Core</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: var(--bs-tertiary-bg); }
+    .app-shell { max-width: 960px; }
+    #toasts { position: fixed; top: 1rem; right: 1rem; z-index: 1080; }
+  </style>
+</head>
+<body>
+
+<div id="toasts"></div>
+
+<!-- ===================== AUTH ===================== -->
+<main id="auth-view" class="container app-shell py-5">
+  <div class="row justify-content-center">
+    <div class="col-sm-9 col-md-7 col-lg-6">
+      <h1 class="h3 mb-1 text-center">Billing Core</h1>
+      <p class="text-secondary text-center mb-4">Plataforma de assinaturas</p>
+
+      <div class="card shadow-sm">
+        <div class="card-header p-0">
+          <ul class="nav nav-tabs card-header-tabs m-0" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-login" type="button" role="tab">Entrar</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-register" type="button" role="tab">Criar conta</button></li>
+          </ul>
+        </div>
+        <div class="card-body tab-content">
+          <form id="form-login" class="tab-pane fade show active" role="tabpanel">
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" name="email" class="form-control" required autocomplete="username">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Senha</label>
+              <input type="password" name="password" class="form-control" required autocomplete="current-password">
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Entrar</button>
+          </form>
+
+          <form id="form-register" class="tab-pane fade" role="tabpanel">
+            <div class="mb-3">
+              <label class="form-label">Nome</label>
+              <input name="name" class="form-control" maxlength="20" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Senha <span class="text-secondary">(mín. 6)</span></label>
+              <input type="password" name="password" class="form-control" minlength="6" required>
+            </div>
+            <button class="btn btn-success w-100" type="submit">Criar conta</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ===================== APP ===================== -->
+<div id="app-view" class="d-none">
+  <nav class="navbar navbar-expand bg-body-tertiary border-bottom">
+    <div class="container app-shell">
+      <span class="navbar-brand fw-semibold">Billing Core</span>
+      <div class="ms-auto d-flex align-items-center gap-3">
+        <span class="badge text-bg-light border" id="balance" title="Saldo">—</span>
+        <button class="btn btn-outline-success btn-sm" id="btn-deposit">Adicionar saldo</button>
+        <span class="text-secondary small d-none d-sm-inline" id="whoami"></span>
+        <button class="btn btn-outline-secondary btn-sm" id="btn-logout">Sair</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container app-shell py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 m-0">Planos</h2>
+      <button id="btn-new-plan" class="btn btn-sm btn-outline-primary d-none" data-bs-toggle="collapse" data-bs-target="#new-plan">Novo plano</button>
+    </div>
+
+    <div class="collapse mb-3" id="new-plan">
+      <div class="card card-body">
+        <form id="form-plan" class="row g-2 align-items-end">
+          <div class="col-sm-3"><label class="form-label small">Nome</label><input name="namePlan" class="form-control form-control-sm" required></div>
+          <div class="col-sm-4"><label class="form-label small">Descrição</label><input name="description" class="form-control form-control-sm" required></div>
+          <div class="col-sm-2"><label class="form-label small">Preço</label><input name="price" type="number" step="0.01" min="0.01" class="form-control form-control-sm" required></div>
+          <div class="col-sm-2">
+            <label class="form-label small">Ciclo</label>
+            <select name="billingCycle" class="form-select form-select-sm">
+              <option>MONTHLY</option><option>QUARTERLY</option><option>YEARLY</option>
+            </select>
+          </div>
+          <div class="col-sm-1"><button class="btn btn-primary btn-sm w-100" type="submit">+</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle bg-body">
+        <thead><tr><th>#</th><th>Nome</th><th class="text-end">Preço</th><th>Status</th><th></th></tr></thead>
+        <tbody id="plans-body">
+          <tr><td colspan="5" class="text-center text-secondary py-4">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="h4 mt-5 mb-3">Minhas assinaturas</h2>
+    <div class="table-responsive">
+      <table class="table align-middle bg-body">
+        <thead><tr><th>#</th><th>Plano</th><th class="text-end">Valor</th><th>Início</th><th>Fim</th><th>Cancelado em</th><th>Status</th><th></th></tr></thead>
+        <tbody id="subs-body">
+          <tr><td colspan="8" class="text-center text-secondary py-4">Carregando…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

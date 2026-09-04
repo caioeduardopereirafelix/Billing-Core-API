@@ -39,6 +39,14 @@ assinaturas continuam sendo criadas.
 `Java 21` · `Spring Boot 3.4` (Web, Security, Data JPA, AMQP, Actuator, Cache) ·
 `PostgreSQL` · `Flyway` · `JWT (jjwt)` · `MapStruct` · `Docker` · `Caddy`
 
+## Como rodar
+
+**Desenvolvimento** (Postgres + RabbitMQ em container, app via Maven):
+
+```bash
+docker compose up -d postgres rabbitmq
+./mvnw spring-boot:run        # exige JDK 21
+```
 
 ## Autenticação e autorização
 

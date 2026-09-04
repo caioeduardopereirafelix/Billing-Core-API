@@ -12,6 +12,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,6 +46,27 @@ class UserServiceTest {
         when(repository.findById(id)).thenReturn(Optional.of(user));
 
         assertEquals(Optional.of(user), service.findById(id));
+    }
+
+    @Test
+    void depositAddsToTheBalanceAndPersists() {
+        user.setBalance(new BigDecimal("10.00"));
+        when(repository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(repository.save(user)).thenReturn(user);
+
+        User result = service.deposit(user.getId(), new BigDecimal("40.50"));
+
+        assertEquals(new BigDecimal("50.50"), result.getBalance());
+        verify(repository).save(user);
+    }
+
+    @Test
+    void depositOnAMissingUserThrowsUserNotFound() {
+        UUID missing = UUID.randomUUID();
+        when(repository.findById(missing)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFound.class, () -> service.deposit(missing, new BigDecimal("10")));
+        verify(repository, never()).save(any());
     }
 
     @Test
