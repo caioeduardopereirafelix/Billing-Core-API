@@ -1,0 +1,29 @@
+# Local testing: `tls internal` -> Caddy's own CA issues a cert for `localhost`.
+# Real deploy: set PUBLIC_HOST to your domain and drop `tls internal` - Caddy
+# then provisions a Let's Encrypt cert automatically.
+
+{$PUBLIC_HOST} {
+	tls internal
+
+	encode gzip
+
+	# API -> Spring Boot
+	@api path /auth/* /plan /plan/* /subscription /subscription/* /user/* /actuator/*
+	handle @api {
+		reverse_proxy app:8080
+	}
+
+	# Everything else -> static frontend
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		-Server
+	}
+}

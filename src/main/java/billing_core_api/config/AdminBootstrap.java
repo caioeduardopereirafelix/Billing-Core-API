@@ -16,14 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Creates one administrator account on startup so the ADMIN-only endpoints are
- * reachable on a fresh deployment. Runs only when both {@code ADMIN_EMAIL} and
- * {@code ADMIN_PASSWORD} are set and no user with that e-mail exists - it is safe
- * to leave running on every boot.
- */
+
 @Component
 @RequiredArgsConstructor
 public class AdminBootstrap {
@@ -61,7 +57,7 @@ public class AdminBootstrap {
                 .name("Administrator")
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
-                .roles(List.of(adminRole))
+                .roles(new ArrayList<>(List.of(adminRole)))
                 .build();
         admin.setCreatedDate(LocalDate.now());
         admin.setLastModifiedDate(Instant.now());

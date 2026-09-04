@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -37,10 +38,7 @@ public class AuthService {
     @Value("${jwt.expiration}")
     private Long expirationTime;
 
-    /**
-     * Single entry point for user creation: e-mail uniqueness check, default role
-     * assignment, password hashing and audit timestamps all happen here.
-     */
+
     @Transactional
     public User register(CreateUserDTO dto) {
 
@@ -55,7 +53,7 @@ public class AuthService {
                 .name(dto.name())
                 .email(dto.email())
                 .password(encoder.encode(dto.password()))
-                .roles(List.of(role))
+                .roles(new ArrayList<>(List.of(role)))
                 .build();
 
         user.setCreatedDate(LocalDate.now());

@@ -5,6 +5,7 @@ import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.dto.user.CreateUserDTO;
+import billing_core_api.dto.user.DepositRequest;
 import billing_core_api.enums.BillingCycle;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -145,5 +146,22 @@ class DTOValidationTest {
     void shouldRejectNonPositivePlanId() {
         var dto = new SubscriptionRequest(0L);
         assertFalse(validator.validate(dto).isEmpty());
+    }
+
+    @Test
+    void shouldAcceptValidDeposit() {
+        assertTrue(validator.validate(new DepositRequest(new BigDecimal("25.00"))).isEmpty());
+    }
+
+    @Test
+    void shouldRejectNullOrNonPositiveDeposit() {
+        assertFalse(validator.validate(new DepositRequest(null)).isEmpty());
+        assertFalse(validator.validate(new DepositRequest(BigDecimal.ZERO)).isEmpty());
+        assertFalse(validator.validate(new DepositRequest(new BigDecimal("-5"))).isEmpty());
+    }
+
+    @Test
+    void shouldRejectDepositWithMoreThanTwoDecimals() {
+        assertFalse(validator.validate(new DepositRequest(new BigDecimal("10.123"))).isEmpty());
     }
 }

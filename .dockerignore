@@ -18,11 +18,17 @@ build/
 mvnw
 mvnw.cmd
 
-# Local-only secret file - must never be baked into the image
+# Local-only secret files - must never be baked into the image
 src/main/resources/application-secrets.yaml
+.env
+.env.prod
+
+# Not part of the app image
+frontend/
+deploy/
 
 # Docs, compose, docker files
 *.md
-docker-compose.yaml
+docker-compose*.yaml
 Dockerfile
 .dockerignore
