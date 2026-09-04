@@ -8,7 +8,9 @@ import billing_core_api.service.validator.UserValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +28,20 @@ public class UserService {
 
     public Optional<User> findById(UUID id){
         return repository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public User getById(UUID id){
+        return repository.findById(id)
+                .orElseThrow(() -> new UserNotFound("User " + id + " not found"));
+    }
+
+    @Transactional
+    public User deposit(UUID userId, BigDecimal amount){
+        var user = repository.findById(userId)
+                .orElseThrow(() -> new UserNotFound("User " + userId + " not found"));
+        user.setBalance(user.getBalance().add(amount));
+        return repository.save(user);
     }
 
     public void deleteUser(User user) {
