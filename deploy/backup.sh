@@ -1,6 +1,5 @@
 #!/bin/sh
-# Periodic pg_dump into the db_backups volume, with rotation.
-# Runs one dump immediately on start, then every BACKUP_INTERVAL_SECONDS.
+
 set -eu
 
 DB_HOST="${DB_HOST:-postgres}"
@@ -24,7 +23,7 @@ while true; do
 		rm -f "$file.tmp"
 	fi
 
-	# keep only the newest $KEEP dumps
+
 	ls -1t "$OUT_DIR"/${DB_NAME}-*.sql.gz 2>/dev/null | tail -n +"$((KEEP + 1))" | while read -r old; do
 		echo "[backup] rotating out $old"
 		rm -f "$old"
