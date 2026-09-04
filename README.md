@@ -39,29 +39,6 @@ assinaturas continuam sendo criadas.
 `Java 21` · `Spring Boot 3.4` (Web, Security, Data JPA, AMQP, Actuator, Cache) ·
 `PostgreSQL` · `Flyway` · `JWT (jjwt)` · `MapStruct` · `Docker` · `Caddy`
 
-## Como rodar
-
-**Desenvolvimento** (Postgres + RabbitMQ em container, app via Maven):
-
-```bash
-docker compose up -d postgres rabbitmq
-./mvnw spring-boot:run        # exige JDK 21
-```
-
-**Stack completa com HTTPS + frontend** (`.env.prod` a partir de `.env.prod.example`):
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yaml up -d --build
-```
-
-Sobe `app` (não‑root), `postgres` e `rabbitmq` (sem portas expostas ao host),
-`caddy` (80/443, serve o frontend e faz proxy da API) e `db-backup` (pg_dump
-periódico). Frontend em `https://localhost`.
-
-Toda a configuração vem de variável de ambiente
-(`SPRING_DATASOURCE_*`, `SPRING_RABBITMQ_*`, `JWT_SECRET`, `JWT_EXPIRATION`,
-`ADMIN_EMAIL`, `ADMIN_PASSWORD`). Sem `application-secrets.yaml` presente, o
-`import` é opcional e os valores vêm do ambiente.
 
 ## Autenticação e autorização
 
