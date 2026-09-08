@@ -1,8 +1,9 @@
 
 
+# PUBLIC_HOST comes from .env.prod. Caddy picks the certificate automatically:
+# a local/internal name (localhost, an IP, *.nip.io on some setups) -> its own CA;
+# a real public domain -> a free Let's Encrypt certificate. No extra config needed.
 {$PUBLIC_HOST} {
-	tls internal
-
 	encode gzip
 
 	# API -> Spring Boot

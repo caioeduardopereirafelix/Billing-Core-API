@@ -37,7 +37,9 @@ H=$($CURL "$BASE/actuator/health")
 case "$H" in *'"status":"UP"'*) ok "GET /actuator/health -> UP";; *) bad "actuator health: $H";; esac
 MIG=$($DC exec -T postgres psql -U "$DB_USER" -d "$DB_NAME" -tAc \
   "select count(*) from flyway_schema_history where success" 2>/dev/null | tr -d '[:space:]')
-[ "$MIG" = "3" ] && ok "Flyway: 3 successful migrations" || bad "Flyway migrations = '$MIG' (expected 3)"
+EXPECTED_MIG=$(ls src/main/resources/db/migration/V*__*.sql | wc -l | tr -d '[:space:]')
+[ "${MIG:-0}" = "$EXPECTED_MIG" ] && ok "Flyway: $MIG/$EXPECTED_MIG migrations applied" \
+  || bad "Flyway migrations = '$MIG' (expected $EXPECTED_MIG)"
 UID_=$($DC exec -T app id -u 2>/dev/null | tr -d '[:space:]')
 [ -n "$UID_" ] && [ "$UID_" != "0" ] && ok "app runs as non-root (uid $UID_)" || bad "app uid = '$UID_'"
 
