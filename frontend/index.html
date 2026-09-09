@@ -1,124 +1,366 @@
 <!doctype html>
-<html lang="pt-br" data-bs-theme="light">
+<html lang="pt-br" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Billing Core</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body { background: var(--bs-tertiary-bg); }
-    .app-shell { max-width: 960px; }
-    #toasts { position: fixed; top: 1rem; right: 1rem; z-index: 1080; }
+    :root{
+      --bg:#0a0e1a; --surface:#111827; --line:rgba(255,255,255,.07); --line-2:rgba(255,255,255,.13);
+      --txt:#e9edf6; --muted:#8a95ab; --brand:#6366f1; --brand-2:#a855f7;
+      --ok:#22c55e; --warn:#f59e0b; --bad:#f43f5e;
+    }
+    [data-bs-theme="dark"]{
+      --bs-body-bg:var(--bg); --bs-body-color:var(--txt); --bs-border-color:var(--line);
+      --bs-secondary-color:var(--muted); --bs-primary:#6366f1; --bs-primary-rgb:99,102,241;
+      --bs-emphasis-color:#fff; --bs-heading-color:#fff;
+    }
+    *{-webkit-font-smoothing:antialiased}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+    .app-shell{max-width:1120px}
+    .text-muted,.text-secondary{color:var(--muted)!important}
+
+    /* ambient glow */
+    .glow{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+    .glow::before,.glow::after{content:'';position:absolute;border-radius:50%;filter:blur(130px);opacity:.30}
+    .glow::before{width:560px;height:560px;background:#6366f1;top:-220px;left:-160px}
+    .glow::after{width:480px;height:480px;background:#a855f7;bottom:-240px;right:-140px}
+    .z1{position:relative;z-index:1}
+
+    .surface{background:linear-gradient(180deg,rgba(255,255,255,.038),rgba(255,255,255,.014));
+      border:1px solid var(--line);border-radius:16px}
+    .brand-mark{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+      background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;font-size:1.05rem;
+      box-shadow:0 8px 22px rgba(99,102,241,.38);flex:none}
+    .grad-txt{background:linear-gradient(115deg,#fff 25%,#c7d2fe 60%,#f0abfc);
+      -webkit-background-clip:text;background-clip:text;color:transparent}
+
+    .btn-grad{background:linear-gradient(135deg,var(--brand),var(--brand-2));border:0;color:#fff;
+      font-weight:600;box-shadow:0 6px 20px rgba(99,102,241,.32);transition:.18s}
+    .btn-grad:hover,.btn-grad:focus{color:#fff;filter:brightness(1.1);transform:translateY(-1px)}
+    .btn-ghost{background:rgba(255,255,255,.05);border:1px solid var(--line-2);color:var(--txt);font-weight:500}
+    .btn-ghost:hover{background:rgba(255,255,255,.1);color:#fff}
+
+    /* forms */
+    .form-control,.form-select{background:rgba(255,255,255,.04);border:1px solid var(--line-2);
+      color:var(--txt);border-radius:10px;padding:.68rem .9rem}
+    .form-control:focus,.form-select:focus{background:rgba(255,255,255,.07);border-color:var(--brand);
+      box-shadow:0 0 0 3px rgba(99,102,241,.2);color:var(--txt)}
+    .form-control::placeholder{color:#5d6884}
+    .form-label{font-size:.82rem;font-weight:500;color:var(--muted);margin-bottom:.35rem}
+
+    /* auth */
+    .auth-shell{min-height:100vh;display:grid;place-items:center;padding:2rem 0}
+    .feat{display:flex;gap:.9rem;align-items:flex-start;margin-bottom:1.15rem}
+    .feat-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none;
+      background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.28);color:#a5b4fc}
+    .nav-tabs{border:0;gap:.25rem;background:rgba(255,255,255,.045);padding:.3rem;border-radius:12px}
+    .nav-tabs .nav-link{border:0;border-radius:9px;color:var(--muted);font-weight:600;flex:1;padding:.55rem 1rem}
+    .nav-tabs .nav-link:hover{color:var(--txt)}
+    .nav-tabs .nav-link.active{background:rgba(255,255,255,.1);color:#fff}
+
+    /* nav */
+    .app-nav{position:sticky;top:0;z-index:20;background:rgba(10,14,26,.82);
+      backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+    .bal-pill{display:inline-flex;align-items:center;gap:.45rem;padding:.42rem .85rem;border-radius:999px;
+      background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.32);font-weight:700;font-size:.9rem;
+      color:#c7d2fe;white-space:nowrap}
+    .avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:.78rem;
+      font-weight:700;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#fff;flex:none}
+
+    /* stats */
+    .stat{padding:1.15rem 1.3rem;height:100%}
+    .stat .lbl{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+    .stat .val{font-size:1.7rem;font-weight:700;letter-spacing:-.025em;margin-top:.3rem;line-height:1.15}
+    .stat .ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:1.1rem;flex:none}
+    .ico-i{background:rgba(99,102,241,.14);color:#a5b4fc;border:1px solid rgba(99,102,241,.26)}
+    .ico-g{background:rgba(34,197,94,.13);color:#4ade80;border:1px solid rgba(34,197,94,.26)}
+    .ico-v{background:rgba(168,85,247,.13);color:#d8b4fe;border:1px solid rgba(168,85,247,.26)}
+
+    /* plan cards */
+    .plan{padding:1.4rem;height:100%;display:flex;flex-direction:column;transition:.2s}
+    .plan:hover{border-color:rgba(139,92,246,.45);transform:translateY(-3px);
+      box-shadow:0 18px 40px rgba(0,0,0,.45)}
+    .plan .price{font-size:1.95rem;font-weight:800;letter-spacing:-.035em;line-height:1}
+    .plan.off{opacity:.55}
+
+    /* pills */
+    .pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.74rem;font-weight:600;
+      padding:.26rem .62rem;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+    .pill .dot{width:6px;height:6px;border-radius:50%;flex:none}
+    .p-ok{background:rgba(34,197,94,.13);color:#4ade80;border-color:rgba(34,197,94,.26)}
+    .p-ok .dot{background:#4ade80}
+    .p-off{background:rgba(255,255,255,.06);color:var(--muted);border-color:var(--line-2)}
+    .p-off .dot{background:var(--muted)}
+    .p-warn{background:rgba(245,158,11,.13);color:#fbbf24;border-color:rgba(245,158,11,.26)}
+    .p-warn .dot{background:#fbbf24}
+
+    /* table */
+    .tbl{--bs-table-bg:transparent;--bs-table-color:var(--txt);margin:0}
+    .tbl thead th{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+      font-weight:600;border-bottom:1px solid var(--line);padding:.85rem 1rem;background:transparent;white-space:nowrap}
+    .tbl tbody td{border-bottom:1px solid var(--line);padding:.9rem 1rem;vertical-align:middle;white-space:nowrap}
+    .tbl tbody tr:last-child td{border-bottom:0}
+    .tbl tbody tr{transition:background .15s}
+    .tbl tbody tr:hover{background:rgba(255,255,255,.028)}
+
+    /* empty + skeleton */
+    .empty{padding:3rem 1rem;text-align:center;color:var(--muted)}
+    .empty i{font-size:2.2rem;opacity:.4;display:block;margin-bottom:.6rem}
+    @keyframes shim{100%{background-position:-200% 0}}
+    .skel{height:13px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,.05),
+      rgba(255,255,255,.13),rgba(255,255,255,.05));background-size:200% 100%;animation:shim 1.4s infinite}
+
+    .sec-title{font-size:1.15rem;font-weight:700;letter-spacing:-.01em;margin:0}
+    .sec-sub{color:var(--muted);font-size:.86rem;margin:.15rem 0 0}
+    #toasts{position:fixed;top:1rem;right:1rem;z-index:1090}
+    .modal-content{background:#121a2b;border:1px solid var(--line-2);border-radius:16px}
+    .quick-amt{border-radius:9px;font-weight:600;font-size:.85rem}
+    @media(max-width:575px){ .stat .val{font-size:1.4rem} }
   </style>
 </head>
 <body>
 
+<div class="glow"></div>
 <div id="toasts"></div>
 
-<main id="auth-view" class="container app-shell py-5">
-  <div class="row justify-content-center">
-    <div class="col-sm-9 col-md-7 col-lg-6">
-      <h1 class="h3 mb-1 text-center">Billing Core</h1>
-      <p class="text-secondary text-center mb-4">Plataforma de assinaturas</p>
+<!-- ============ AUTH ============ -->
+<div id="auth-view" class="auth-shell z1">
+  <div class="container app-shell">
+    <div class="row align-items-center g-5 justify-content-center">
 
-      <div class="card shadow-sm">
-        <div class="card-header p-0">
-          <ul class="nav nav-tabs card-header-tabs m-0" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-login" type="button" role="tab">Entrar</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-register" type="button" role="tab">Criar conta</button></li>
-          </ul>
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="d-flex align-items-center gap-2 mb-4">
+          <div class="brand-mark"><i class="bi bi-layers-half"></i></div>
+          <span class="fw-bold fs-5">Billing Core</span>
         </div>
-        <div class="card-body tab-content">
-          <form id="form-login" class="tab-pane fade show active" role="tabpanel">
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" name="email" class="form-control" required autocomplete="username">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Senha</label>
-              <input type="password" name="password" class="form-control" required autocomplete="current-password">
-            </div>
-            <button class="btn btn-primary w-100" type="submit">Entrar</button>
-          </form>
+        <h1 class="display-6 fw-bold lh-sm mb-3 grad-txt">Assinaturas, do plano<br>até a cobrança.</h1>
+        <p class="text-muted mb-4 pe-lg-5">Plataforma de billing com carteira pré-paga, autenticação
+          JWT e eventos assíncronos — construída em Java + Spring Boot.</p>
 
-          <form id="form-register" class="tab-pane fade" role="tabpanel">
-            <div class="mb-3">
-              <label class="form-label">Nome</label>
-              <input name="name" class="form-control" maxlength="20" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" name="email" class="form-control" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Senha <span class="text-secondary">(mín. 6)</span></label>
-              <input type="password" name="password" class="form-control" minlength="6" required>
-            </div>
-            <button class="btn btn-success w-100" type="submit">Criar conta</button>
-          </form>
+        <div class="feat">
+          <div class="feat-ico"><i class="bi bi-shield-check"></i></div>
+          <div><div class="fw-semibold">Autenticação e papéis</div>
+            <div class="text-muted small">JWT com RBAC <code>USER</code> / <code>ADMIN</code> e acesso por dono do recurso.</div></div>
+        </div>
+        <div class="feat">
+          <div class="feat-ico"><i class="bi bi-wallet2"></i></div>
+          <div><div class="fw-semibold">Carteira pré-paga</div>
+            <div class="text-muted small">O plano é debitado do saldo e o valor fica congelado na assinatura.</div></div>
+        </div>
+        <div class="feat">
+          <div class="feat-ico"><i class="bi bi-arrow-repeat"></i></div>
+          <div><div class="fw-semibold">Eventos resilientes</div>
+            <div class="text-muted small">RabbitMQ com retry, Dead Letter Queue e idempotência no consumidor.</div></div>
         </div>
       </div>
+
+      <div class="col-lg-5 col-md-8">
+        <div class="surface p-4 p-sm-4">
+          <div class="d-lg-none d-flex align-items-center gap-2 mb-4">
+            <div class="brand-mark"><i class="bi bi-layers-half"></i></div>
+            <span class="fw-bold fs-5">Billing Core</span>
+          </div>
+
+          <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#form-login" type="button" role="tab">Entrar</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" data-bs-toggle="tab" data-bs-target="#form-register" type="button" role="tab">Criar conta</button>
+            </li>
+          </ul>
+
+          <div class="tab-content">
+            <form id="form-login" class="tab-pane fade show active" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="email" name="email" class="form-control" placeholder="voce@email.com" required autocomplete="username">
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+              </div>
+              <button class="btn btn-grad w-100 py-2" type="submit">
+                Entrar <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </form>
+
+            <form id="form-register" class="tab-pane fade" role="tabpanel">
+              <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input name="name" class="form-control" placeholder="Seu nome" maxlength="20" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="email" name="email" class="form-control" placeholder="voce@email.com" required>
+              </div>
+              <div class="mb-4">
+                <label class="form-label">Senha <span class="text-muted">· mínimo 6 caracteres</span></label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" minlength="6" required>
+              </div>
+              <button class="btn btn-grad w-100 py-2" type="submit">
+                Criar conta <i class="bi bi-arrow-right ms-1"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
-</main>
+</div>
 
+<!-- ============ APP ============ -->
+<div id="app-view" class="d-none z1">
+  <nav class="app-nav">
+    <div class="container app-shell d-flex align-items-center gap-3 py-2">
+      <div class="brand-mark"><i class="bi bi-layers-half"></i></div>
+      <span class="fw-bold d-none d-sm-inline">Billing Core</span>
 
-<div id="app-view" class="d-none">
-  <nav class="navbar navbar-expand bg-body-tertiary border-bottom">
-    <div class="container app-shell">
-      <span class="navbar-brand fw-semibold">Billing Core</span>
-      <div class="ms-auto d-flex align-items-center gap-3">
-        <span class="badge text-bg-light border" id="balance" title="Saldo">—</span>
-        <button class="btn btn-outline-success btn-sm" id="btn-deposit">Adicionar saldo</button>
-        <span class="text-secondary small d-none d-sm-inline" id="whoami"></span>
-        <button class="btn btn-outline-secondary btn-sm" id="btn-logout">Sair</button>
+      <div class="ms-auto d-flex align-items-center gap-2 gap-sm-3">
+        <span class="bal-pill"><i class="bi bi-wallet2"></i><span id="balance">—</span></span>
+        <button class="btn btn-grad btn-sm px-3" id="btn-deposit">
+          <i class="bi bi-plus-lg me-1"></i><span class="d-none d-sm-inline">Adicionar saldo</span>
+        </button>
+        <div class="avatar" id="avatar" title="">?</div>
+        <button class="btn btn-ghost btn-sm" id="btn-logout" title="Sair"><i class="bi bi-box-arrow-right"></i></button>
       </div>
     </div>
   </nav>
 
-  <main class="container app-shell py-4">
+  <main class="container app-shell py-4 py-lg-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="h4 m-0">Planos</h2>
-      <button id="btn-new-plan" class="btn btn-sm btn-outline-primary d-none" data-bs-toggle="collapse" data-bs-target="#new-plan">Novo plano</button>
+    <!-- stats -->
+    <div class="row g-3 mb-5">
+      <div class="col-sm-6 col-lg-4">
+        <div class="surface stat d-flex align-items-start gap-3">
+          <div class="ico ico-i"><i class="bi bi-wallet2"></i></div>
+          <div><div class="lbl">Saldo disponível</div><div class="val" id="stat-balance">—</div></div>
+        </div>
+      </div>
+      <div class="col-sm-6 col-lg-4">
+        <div class="surface stat d-flex align-items-start gap-3">
+          <div class="ico ico-g"><i class="bi bi-check2-circle"></i></div>
+          <div><div class="lbl">Assinaturas ativas</div><div class="val" id="stat-active">—</div></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="surface stat d-flex align-items-start gap-3">
+          <div class="ico ico-v"><i class="bi bi-graph-up-arrow"></i></div>
+          <div><div class="lbl">Total em assinaturas</div><div class="val" id="stat-spent">—</div></div>
+        </div>
+      </div>
     </div>
 
-    <div class="collapse mb-3" id="new-plan">
-      <div class="card card-body">
-        <form id="form-plan" class="row g-2 align-items-end">
-          <div class="col-sm-3"><label class="form-label small">Nome</label><input name="namePlan" class="form-control form-control-sm" required></div>
-          <div class="col-sm-4"><label class="form-label small">Descrição</label><input name="description" class="form-control form-control-sm" required></div>
-          <div class="col-sm-2"><label class="form-label small">Preço</label><input name="price" type="number" step="0.01" min="0.01" class="form-control form-control-sm" required></div>
-          <div class="col-sm-2">
-            <label class="form-label small">Ciclo</label>
-            <select name="billingCycle" class="form-select form-select-sm">
-              <option>MONTHLY</option><option>QUARTERLY</option><option>YEARLY</option>
+    <!-- plans -->
+    <div class="d-flex justify-content-between align-items-end mb-3 gap-3">
+      <div>
+        <h2 class="sec-title">Planos disponíveis</h2>
+        <p class="sec-sub">Escolha um plano — o valor é debitado do seu saldo.</p>
+      </div>
+      <button id="btn-new-plan" class="btn btn-ghost btn-sm d-none flex-none" data-bs-toggle="collapse" data-bs-target="#new-plan">
+        <i class="bi bi-plus-lg me-1"></i>Novo plano
+      </button>
+    </div>
+
+    <div class="collapse mb-4" id="new-plan">
+      <div class="surface p-3 p-sm-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-shield-lock text-muted"></i>
+          <span class="small text-muted">Área do administrador</span>
+        </div>
+        <form id="form-plan" class="row g-3 align-items-end">
+          <div class="col-sm-6 col-lg-3"><label class="form-label">Nome</label><input name="namePlan" class="form-control" placeholder="Pro" required></div>
+          <div class="col-sm-6 col-lg-4"><label class="form-label">Descrição</label><input name="description" class="form-control" placeholder="Tudo do Basic, mais relatórios" required></div>
+          <div class="col-6 col-lg-2"><label class="form-label">Preço</label><input name="price" type="number" step="0.01" min="0.01" class="form-control" placeholder="99.90" required></div>
+          <div class="col-6 col-lg-2">
+            <label class="form-label">Ciclo</label>
+            <select name="billingCycle" class="form-select">
+              <option value="MONTHLY">Mensal</option>
+              <option value="QUARTERLY">Trimestral</option>
+              <option value="YEARLY">Anual</option>
             </select>
           </div>
-          <div class="col-sm-1"><button class="btn btn-primary btn-sm w-100" type="submit">+</button></div>
+          <div class="col-lg-1"><button class="btn btn-grad w-100" type="submit"><i class="bi bi-check-lg"></i></button></div>
         </form>
       </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table align-middle bg-body">
-        <thead><tr><th>#</th><th>Nome</th><th class="text-end">Preço</th><th>Status</th><th></th></tr></thead>
-        <tbody id="plans-body">
-          <tr><td colspan="5" class="text-center text-secondary py-4">Carregando…</td></tr>
-        </tbody>
-      </table>
+    <div class="row g-3 mb-5" id="plans-grid"></div>
+
+    <!-- subscriptions -->
+    <div class="mb-3">
+      <h2 class="sec-title">Minhas assinaturas</h2>
+      <p class="sec-sub">Histórico completo, com data de cancelamento quando houver.</p>
     </div>
 
-    <h2 class="h4 mt-5 mb-3">Minhas assinaturas</h2>
-    <div class="table-responsive">
-      <table class="table align-middle bg-body">
-        <thead><tr><th>#</th><th>Plano</th><th class="text-end">Valor</th><th>Início</th><th>Fim</th><th>Cancelado em</th><th>Status</th><th></th></tr></thead>
-        <tbody id="subs-body">
-          <tr><td colspan="8" class="text-center text-secondary py-4">Carregando…</td></tr>
-        </tbody>
-      </table>
+    <div class="surface overflow-hidden">
+      <div class="table-responsive">
+        <table class="table tbl">
+          <thead><tr>
+            <th>#</th><th>Plano</th><th class="text-end">Valor</th>
+            <th>Início</th><th>Fim</th><th>Cancelado em</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="subs-body"></tbody>
+        </table>
+      </div>
     </div>
+
+    <p class="text-center text-muted small mt-5 mb-0">
+      Billing Core · Java 21 · Spring Boot · PostgreSQL · RabbitMQ · Docker
+    </p>
   </main>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal fade" id="modal-deposit" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <form id="form-deposit">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fs-6 fw-bold"><i class="bi bi-wallet2 me-2"></i>Adicionar saldo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Valor (R$)</label>
+          <input type="number" name="amount" step="0.01" min="0.01" class="form-control mb-3" placeholder="100.00" required>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-ghost btn-sm quick-amt flex-fill" data-amt="50">R$ 50</button>
+            <button type="button" class="btn btn-ghost btn-sm quick-amt flex-fill" data-amt="100">R$ 100</button>
+            <button type="button" class="btn btn-ghost btn-sm quick-amt flex-fill" data-amt="500">R$ 500</button>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="submit" class="btn btn-grad w-100">Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-cancel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fs-6 fw-bold">Cancelar assinatura</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-0">Você continuará com acesso até o fim do período já contratado.
+          O valor pago não é estornado.</p>
+      </div>
+      <div class="modal-footer border-0 pt-0 gap-2">
+        <button type="button" class="btn btn-ghost btn-sm flex-fill" data-bs-dismiss="modal">Voltar</button>
+        <button type="button" class="btn btn-danger btn-sm flex-fill" id="confirm-cancel">Cancelar assinatura</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
