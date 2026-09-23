@@ -37,14 +37,14 @@ class AdminBootstrapTest {
     @BeforeEach
     void configure() {
         ReflectionTestUtils.setField(bootstrap, "adminEmail", "admin@billing.local");
-        ReflectionTestUtils.setField(bootstrap, "adminPassword", "raw-input");
+        ReflectionTestUtils.setField(bootstrap, "adminPassword", "s3cret-pass");
     }
 
     @Test
     void createsAdminWhenConfiguredAndAbsent() {
         when(userRepository.findByEmail("admin@billing.local")).thenReturn(Optional.empty());
         when(roleRepository.findByName(RoleTypeEnum.ROLE_ADMIN.name())).thenReturn(Optional.of(adminRole));
-        when(passwordEncoder.encode("raw-input")).thenReturn("hashed");
+        when(passwordEncoder.encode("s3cret-pass")).thenReturn("hashed");
 
         bootstrap.createAdminIfConfigured();
 

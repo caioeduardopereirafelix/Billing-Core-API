@@ -3,11 +3,13 @@ package billing_core_api.controller;
 import billing_core_api.dto.plan.PlanRequest;
 import billing_core_api.dto.plan.PlanResponse;
 import billing_core_api.dto.plan.UpdatePlanRequest;
+import billing_core_api.repository.PlanRepository;
 import billing_core_api.service.PlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,32 +23,57 @@ public class PlanController {
 
     @PostMapping
     public ResponseEntity<PlanResponse> createPlan(@Valid @RequestBody PlanRequest request){
-        var plan = service.createPlan(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(PlanResponse.from(plan));
+        var planToSave = service.createPlan(request);
+
+        var response = new PlanResponse(planToSave.getId(),
+                planToSave.getName(),
+                planToSave.getPrice(),
+                planToSave.getActive());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PlanResponse> findById(@PathVariable Long id){
-        return ResponseEntity.ok(PlanResponse.from(service.findById(id)));
+    public ResponseEntity<PlanResponse> findById(@Valid @PathVariable Long id){
+        var plan = service.findById(id);
+
+        var response = new PlanResponse(plan.getId(),
+                plan.getName(),
+                plan.getPrice(),
+                plan.getActive());
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @GetMapping
     public ResponseEntity<List<PlanResponse>> listAll(){
         var response = service.listAll()
                 .stream()
-                .map(PlanResponse::from)
-                .toList();
+                .map(plan -> new PlanResponse(plan.getId(),
+                        plan.getName(),
+                        plan.getPrice(),
+                        plan.getActive())).toList();
 
         return ResponseEntity.ok(response);
     }
 
     @PatchMapping("/{id}/cancel")
-    public ResponseEntity<PlanResponse> cancelPlan(@PathVariable Long id){
-        return ResponseEntity.ok(PlanResponse.from(service.disabledPlan(id)));
+    public ResponseEntity<PlanResponse> cancelPlan(@Valid @PathVariable Long id){
+        var plan = service.disabledPlan(id);
+
+        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.getActive());
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PlanResponse> changePrice(@PathVariable Long id, @Valid @RequestBody UpdatePlanRequest planRequest){
-        return ResponseEntity.ok(PlanResponse.from(service.putPlan(id, planRequest)));
+        var plan = service.putPlan(id, planRequest);
+
+        var response = new PlanResponse(plan.getId(), plan.getName(), plan.getPrice(), plan.getActive());
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+
     }
 }

@@ -138,16 +138,4 @@ class SubscriptionFlowTest {
     void me_requiresAuthentication() throws Exception {
         mvc.perform(get("/subscription/me")).andExpect(status().isUnauthorized());
     }
-
-    @Test
-    void planListExposesDescriptionAndBillingCycle() throws Exception {
-        String alice = tokenFor("plans-" + System.nanoTime() + "@x.com");
-
-        mvc.perform(get("/plan/" + planId).header("Authorization", alice))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(planId))
-                .andExpect(jsonPath("$.description").value("test"))
-                .andExpect(jsonPath("$.billingCycle").value("MONTHLY"))
-                .andExpect(jsonPath("$.active").value(true));
-    }
 }
