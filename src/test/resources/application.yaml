@@ -1,0 +1,7 @@
+# Test-only overrides. Keeps the production rate limit tight while giving
+# the @SpringBootTest suites (which call /auth/register and /auth/login
+# many times per run) enough headroom to not trip it.
+rate-limit:
+  auth:
+    max-requests: 1000
+    window-seconds: 60

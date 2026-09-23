@@ -63,7 +63,7 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<ResponseUserDTO> updateUser(
             @PathVariable("userId") String userId,
-            @RequestBody UpdateUserDTO updateUserDTO) {
+            @Valid @RequestBody UpdateUserDTO updateUserDTO) {
 
         UUID id = UUID.fromString(userId);
         securityUtils.requireOwnerOrAdmin(id);

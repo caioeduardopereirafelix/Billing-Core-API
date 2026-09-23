@@ -1,6 +1,8 @@
 package billing_core_api.controller;
 
+import billing_core_api.config.AuthRateLimitFilter;
 import billing_core_api.config.JwtAuthenticationFilter;
+import billing_core_api.config.RateLimiter;
 import billing_core_api.config.SecurityConfig;
 import billing_core_api.config.TokenProvider;
 import billing_core_api.domain.user.User;
@@ -19,11 +21,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, AuthRateLimitFilter.class, RateLimiter.class})
 class AuthControllerTest {
 
     @Autowired
@@ -62,6 +65,24 @@ class AuthControllerTest {
                                 {"name":"Caio","email":"caio@email.com","password":"secret1"}
                                 """))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void register_neverExposesPasswordHash() throws Exception {
+        when(authService.register(any())).thenReturn(User.builder()
+                .name("Caio")
+                .email("caio@email.com")
+                .password("$2a$10$superSecretBcryptHashValue")
+                .build());
+
+        mvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Caio","email":"caio@email.com","password":"secret1"}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("superSecretBcryptHashValue"))));
     }
 
     @Test

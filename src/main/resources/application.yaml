@@ -50,3 +50,10 @@ app:
   admin:
     email: ${ADMIN_EMAIL:}
     password: ${ADMIN_PASSWORD:}
+
+# Throttles POST /auth/register and POST /auth/login per caller IP, to slow
+# down account-enumeration probing and password brute-forcing.
+rate-limit:
+  auth:
+    max-requests: ${RATE_LIMIT_AUTH_MAX_REQUESTS:10}
+    window-seconds: ${RATE_LIMIT_AUTH_WINDOW_SECONDS:60}

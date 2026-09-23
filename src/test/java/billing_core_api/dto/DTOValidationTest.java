@@ -6,6 +6,7 @@ import billing_core_api.dto.plan.UpdatePlanRequest;
 import billing_core_api.dto.subscription.SubscriptionRequest;
 import billing_core_api.dto.user.CreateUserDTO;
 import billing_core_api.dto.user.DepositRequest;
+import billing_core_api.dto.user.UpdateUserDTO;
 import billing_core_api.enums.BillingCycle;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -163,5 +164,25 @@ class DTOValidationTest {
     @Test
     void shouldRejectDepositWithMoreThanTwoDecimals() {
         assertFalse(validator.validate(new DepositRequest(new BigDecimal("10.123"))).isEmpty());
+    }
+
+    @Test
+    void shouldAcceptValidUpdateUserDTO() {
+        var dto = new UpdateUserDTO("Caio", "caio@email.com", null);
+        assertTrue(validator.validate(dto).isEmpty());
+    }
+
+    @Test
+    void shouldRejectUpdateUserDTOWithBlankName() {
+        var dto = new UpdateUserDTO("", "caio@email.com", null);
+        assertTrue(validator.validate(dto).stream()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("name")));
+    }
+
+    @Test
+    void shouldRejectUpdateUserDTOWithInvalidEmail() {
+        var dto = new UpdateUserDTO("Caio", "not-an-email", null);
+        assertTrue(validator.validate(dto).stream()
+                .anyMatch(v -> v.getPropertyPath().toString().equals("email")));
     }
 }

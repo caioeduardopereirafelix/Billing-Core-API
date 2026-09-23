@@ -1,6 +1,8 @@
 package billing_core_api.controller;
 
+import billing_core_api.config.AuthRateLimitFilter;
 import billing_core_api.config.JwtAuthenticationFilter;
+import billing_core_api.config.RateLimiter;
 import billing_core_api.config.SecurityConfig;
 import billing_core_api.config.SecurityUtils;
 import billing_core_api.config.TokenProvider;
@@ -28,11 +30,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, SecurityUtils.class, UserMapperImpl.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, AuthRateLimitFilter.class, RateLimiter.class, SecurityUtils.class, UserMapperImpl.class})
 class UserControllerTest {
 
     @Autowired
@@ -76,6 +79,18 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("alice@x.com"))
                 .andExpect(jsonPath("$.balance").value(50.00));
+    }
+
+    @Test
+    void me_neverExposesPasswordField() throws Exception {
+        User alice = authenticatedUser("alice-secure@x.com", RoleTypeEnum.ROLE_USER, BigDecimal.ZERO);
+        String token = tokenFor(alice);
+        when(userService.getById(alice.getId())).thenReturn(alice);
+
+        mvc.perform(get("/user/me").header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("hashed"))));
     }
 
     @Test
@@ -215,5 +230,31 @@ class UserControllerTest {
                                 {"name":"Ghost","email":"ghost@x.com","password":null}
                                 """))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateUser_withBlankName_returns400() throws Exception {
+        User alice = authenticatedUser("alice10@x.com", RoleTypeEnum.ROLE_USER, BigDecimal.ZERO);
+        String token = tokenFor(alice);
+
+        mvc.perform(put("/user/" + alice.getId()).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"","email":"alice10@x.com","password":null}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateUser_withInvalidEmail_returns400() throws Exception {
+        User alice = authenticatedUser("alice11@x.com", RoleTypeEnum.ROLE_USER, BigDecimal.ZERO);
+        String token = tokenFor(alice);
+
+        mvc.perform(put("/user/" + alice.getId()).header("Authorization", token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Alice","email":"not-an-email","password":null}
+                                """))
+                .andExpect(status().isBadRequest());
     }
 }

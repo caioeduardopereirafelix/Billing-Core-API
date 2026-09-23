@@ -37,6 +37,7 @@ public class User extends AuditingClass implements UserDetails {
     @Column(name = "email", unique = true)
     private String email;
 
+    @ToString.Exclude
     @Column(name = "password")
     private String password;
 

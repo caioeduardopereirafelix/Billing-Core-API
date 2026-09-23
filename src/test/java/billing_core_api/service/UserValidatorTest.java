@@ -9,10 +9,8 @@ import billing_core_api.exception.InvalidFieldException;
 import billing_core_api.exception.RegistrationDuplicated;
 import billing_core_api.repository.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +28,11 @@ public class UserValidatorTest {
     @Test
     void shouldRejectBlankPassword() {
         assertThrows(InvalidFieldException.class, () -> validator.validatePassword("   "));
+    }
+
+    @Test
+    void shouldRejectNullPassword() {
+        assertThrows(InvalidFieldException.class, () -> validator.validatePassword(null));
     }
 
     @Test
@@ -61,6 +64,11 @@ public class UserValidatorTest {
     }
 
     @Test
+    void shouldRejectNullName() {
+        assertThrows(InvalidFieldException.class, () -> validator.validateName(null));
+    }
+
+    @Test
     void shouldAcceptNonBlankName() {
         assertDoesNotThrow(() -> validator.validateName("Caio"));
     }
@@ -69,10 +77,14 @@ public class UserValidatorTest {
     void shouldRejectNewUserWhenEmailAlreadyExists() {
         User existing = User.builder()
                 .id(UUID.randomUUID())
+                .name("Existing")
+                .password("hashed")
                 .email("caio@email.com")
                 .build();
 
         User newUser = User.builder()
+                .name("Caio")
+                .password("hashed")
                 .email("caio@email.com")
                 .build();
 
@@ -83,7 +95,7 @@ public class UserValidatorTest {
 
     @Test
     void shouldAcceptNewUserWhenEmailDoesNotExist() {
-        User newUser = User.builder().email("new@email.com").build();
+        User newUser = User.builder().name("Caio").password("hashed").email("new@email.com").build();
 
         when(repository.findByEmail("new@email.com")).thenReturn(Optional.empty());
 
@@ -93,7 +105,7 @@ public class UserValidatorTest {
     @Test
     void shouldAcceptUpdateWhenEmailBelongsToSameUser() {
         UUID id = UUID.randomUUID();
-        User user = User.builder().id(id).email("caio@email.com").build();
+        User user = User.builder().id(id).name("Caio").password("hashed").email("caio@email.com").build();
 
         when(repository.findByEmail("caio@email.com")).thenReturn(Optional.of(user));
 
@@ -105,8 +117,8 @@ public class UserValidatorTest {
         UUID currentId = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
 
-        User current = User.builder().id(currentId).email("caio@email.com").build();
-        User other = User.builder().id(otherId).email("caio@email.com").build();
+        User current = User.builder().id(currentId).name("Caio").password("hashed").email("caio@email.com").build();
+        User other = User.builder().id(otherId).name("Other").password("hashed").email("caio@email.com").build();
 
         when(repository.findByEmail("caio@email.com")).thenReturn(Optional.of(other));
 
@@ -116,10 +128,26 @@ public class UserValidatorTest {
     @Test
     void shouldAcceptUpdateWhenNewEmailDoesNotBelongToAnyUser() {
         UUID currentId = UUID.randomUUID();
-        User current = User.builder().id(currentId).email("new@email.com").build();
+        User current = User.builder().id(currentId).name("Caio").password("hashed").email("new@email.com").build();
 
         when(repository.findByEmail("new@email.com")).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> validator.validate(current));
+    }
+
+    @Test
+    void shouldRejectUserWithBlankNameOnValidate() {
+        User user = User.builder().name(" ").password("hashed").email("caio@email.com").build();
+
+        assertThrows(InvalidFieldException.class, () -> validator.validate(user));
+        verifyNoInteractions(repository);
+    }
+
+    @Test
+    void shouldRejectUserWithBlankPasswordOnValidate() {
+        User user = User.builder().name("Caio").password(" ").email("caio@email.com").build();
+
+        assertThrows(InvalidFieldException.class, () -> validator.validate(user));
+        verifyNoInteractions(repository);
     }
 }

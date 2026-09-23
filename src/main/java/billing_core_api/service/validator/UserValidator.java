@@ -18,7 +18,7 @@ public class UserValidator {
     private final UserRepository repository;
 
     public void validatePassword(String senha){
-        if (senha.isBlank()) {
+        if (senha == null || senha.isBlank()) {
             throw new InvalidFieldException("Password","Password cannot be blank");
         }
     }
@@ -30,30 +30,25 @@ public class UserValidator {
     }
 
     public void validateName(String name){
-        if (name.isBlank()) {
+        if (name == null || name.isBlank()) {
             throw new InvalidFieldException("Name","Name cannot be blank");
         }
     }
 
     public void validate(User user) {
-        if (existUser(user)){
+        validateName(user.getName());
+        validatePassword(user.getPassword());
+        validateEmailNotTakenByAnotherUser(user);
+    }
+
+    private void validateEmailNotTakenByAnotherUser(User user){
+        Optional<User> userWithSameEmail = repository.findByEmail(user.getEmail());
+
+        boolean takenByAnotherUser = userWithSameEmail.isPresent()
+                && (user.getId() == null || !user.getId().equals(userWithSameEmail.get().getId()));
+
+        if (takenByAnotherUser) {
             throw new RegistrationDuplicated("Autor já cadastrado");
         }
     }
-
-
-    private boolean existUser(User user){
-
-        Optional<User> userFound =
-                repository.findByEmail(user.getEmail());
-
-        if (user.getId() == null){
-            return userFound.isPresent();
-        }
-
-        return userFound.isPresent() && !user.getId().equals(userFound.get().getId());
-    }
-
-    //melhorar essa validacao, pois nao esta lancando excecao personalizada e melhorar os metodos para validar
-    //usuario existe ou nao, password e email
 }

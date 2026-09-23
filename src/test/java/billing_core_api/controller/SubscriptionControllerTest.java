@@ -1,6 +1,8 @@
 package billing_core_api.controller;
 
+import billing_core_api.config.AuthRateLimitFilter;
 import billing_core_api.config.JwtAuthenticationFilter;
+import billing_core_api.config.RateLimiter;
 import billing_core_api.config.SecurityConfig;
 import billing_core_api.config.SecurityUtils;
 import billing_core_api.config.TokenProvider;
@@ -34,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SubscriptionController.class)
-@Import({SecurityConfig.class, JwtAuthenticationFilter.class, SecurityUtils.class})
+@Import({SecurityConfig.class, JwtAuthenticationFilter.class, AuthRateLimitFilter.class, RateLimiter.class, SecurityUtils.class})
 class SubscriptionControllerTest {
 
     @Autowired
