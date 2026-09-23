@@ -1,5 +1,11 @@
 # Billing Core API
 
+[![CI](https://github.com/caioeduardopereirafelix/Billing-Core-API/actions/workflows/ci.yml/badge.svg)](https://github.com/caioeduardopereirafelix/Billing-Core-API/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F?logo=springboot&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-4-FF6600?logo=rabbitmq&logoColor=white)
+
 API de billing de assinaturas em Java + Spring Boot. Cuida do domínio de negócio
 — usuários, planos, assinaturas e carteira pré‑paga — e publica eventos de forma
 assíncrona para o [`notification-worker`](https://github.com/caioeduardopereirafelix/notification-worker-with-billing-core-api),

@@ -1,12 +1,3 @@
-# Production stack - single host.
-#   docker compose --env-file .env.prod -f docker-compose.prod.yaml up -d --build
-#
-# Differences from docker-compose.yaml (dev):
-#   - no pgadmin
-#   - Postgres / RabbitMQ have NO published host ports (internal network only)
-#   - Caddy terminates HTTPS and is the only entry point (80/443)
-#   - db-backup sidecar takes periodic pg_dump snapshots
-#   - real credentials come from .env.prod
 
 name: billing-prod
 
