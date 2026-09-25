@@ -2,8 +2,6 @@
 
 const TOKEN_KEY = 'billing.jwt';
 const $ = (sel, root = document) => root.querySelector(sel);
-
-// ---------- token helpers ----------
 const getToken = () => localStorage.getItem(TOKEN_KEY);
 const setToken = (t) => localStorage.setItem(TOKEN_KEY, t);
 const clearToken = () => localStorage.removeItem(TOKEN_KEY);
@@ -16,7 +14,6 @@ function tokenClaims() {
 const tokenSubject = () => tokenClaims().sub || null;
 const isAdmin = () => (tokenClaims().roles || []).includes('ROLE_ADMIN');
 
-// ---------- api ----------
 async function api(path, { method = 'GET', body, auth = true } = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (auth && getToken()) headers.Authorization = `Bearer ${getToken()}`;
@@ -32,20 +29,15 @@ async function api(path, { method = 'GET', body, auth = true } = {}) {
 const safeJson = (s) => { try { return JSON.parse(s); } catch { return null; } };
 class ApiError extends Error { constructor(status, msg, data) { super(msg); this.status = status; this.data = data; } }
 
-// pulls the friendliest message out of an API error (field errors first)
 const errText = (e) => (e.data && Array.isArray(e.data.fieldsError) && e.data.fieldsError.length)
   ? e.data.fieldsError.map((x) => x.message).join(' · ')
   : e.message;
 
-// ---------- ui helpers ----------
 const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const money = (v) => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-// Backend sends "2026-09-03" / "2026-10-02T23:59:59". `new Date("2026-09-03")` is
-// parsed as UTC midnight and shifts a day back in negative-offset zones, so build
-// the date from its calendar parts and render it as local.
 const fmtDate = (s) => {
   if (!s) return '—';
   const [y, mo, d] = s.split('T')[0].split('-').map(Number);
@@ -92,7 +84,6 @@ const rowSkeleton = (cols) =>
 const emptyRow = (cols, icon, text) =>
   `<tr><td colspan="${cols}"><div class="empty"><i class="bi bi-${icon}"></i>${escapeHtml(text)}</div></td></tr>`;
 
-// ---------- views ----------
 function showAuth() {
   $('#auth-view').classList.remove('d-none');
   $('#app-view').classList.add('d-none');
@@ -116,7 +107,6 @@ function showApp() {
 
 function logout() { clearToken(); showAuth(); }
 
-// ---------- balance ----------
 async function loadBalance() {
   try {
     const me = await api('/user/me');
@@ -129,7 +119,6 @@ async function loadBalance() {
   }
 }
 
-// ---------- plans ----------
 async function loadPlans() {
   const grid = $('#plans-grid');
   grid.innerHTML = planSkeleton();
@@ -179,7 +168,6 @@ async function subscribe(planId) {
   }
 }
 
-// ---------- my subscriptions ----------
 async function loadMySubs() {
   const body = $('#subs-body');
   body.innerHTML = rowSkeleton(8);
@@ -215,8 +203,6 @@ async function loadMySubs() {
       <i class="bi bi-exclamation-octagon"></i>${escapeHtml(e.message)}</div></td></tr>`;
   }
 }
-
-// ---------- deposit ----------
 const depositModal = () => bootstrap.Modal.getOrCreateInstance($('#modal-deposit'));
 
 $('#btn-deposit').addEventListener('click', () => {
@@ -241,7 +227,6 @@ $('#form-deposit').addEventListener('submit', async (ev) => {
   } catch (e) { toast(errText(e), 'danger'); }
 });
 
-// ---------- cancel ----------
 let pendingCancelId = null;
 const cancelModal = () => bootstrap.Modal.getOrCreateInstance($('#modal-cancel'));
 
@@ -258,7 +243,6 @@ $('#confirm-cancel').addEventListener('click', async () => {
   } finally { pendingCancelId = null; }
 });
 
-// ---------- auth forms ----------
 $('#form-login').addEventListener('submit', async (ev) => {
   ev.preventDefault();
   const f = new FormData(ev.target);
@@ -303,7 +287,6 @@ $('#form-plan').addEventListener('submit', async (ev) => {
   }
 });
 
-// ---------- delegated clicks ----------
 $('#btn-logout').addEventListener('click', logout);
 
 $('#plans-grid').addEventListener('click', (ev) => {
@@ -316,5 +299,4 @@ $('#subs-body').addEventListener('click', (ev) => {
   if (btn) { pendingCancelId = btn.dataset.cancel; cancelModal().show(); }
 });
 
-// ---------- boot ----------
 getToken() ? showApp() : showAuth();

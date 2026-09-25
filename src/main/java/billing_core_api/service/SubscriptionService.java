@@ -73,7 +73,6 @@ public class SubscriptionService {
         var saved = repository.save(subscription);
 
         //criacao mensagem para Notification-Worker
-
         String correlationId = UUID.randomUUID().toString();
         SubscriptionCreatedEvent event = new SubscriptionCreatedEvent(
                 UUID.randomUUID(),

@@ -10,11 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-/**
- * Fixed-window request counter, keyed by caller. In-memory only - fine for a
- * single instance; a multi-instance deployment would need a shared store
- * (e.g. Redis) for this to be effective across nodes.
- */
+
 @Component
 public class RateLimiter {
 
@@ -35,7 +31,6 @@ public class RateLimiter {
         this.clock = clock;
     }
 
-    /** Returns true when the call is within the limit for the current window. */
     public boolean tryAcquire(String key) {
         Instant now = clock.get();
 
